@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Netherite.Nbt\Netherite.Nbt.csproj" />
     <ProjectReference Include="..\Netherite\Netherite.csproj" />
   </ItemGroup>
 

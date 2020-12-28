@@ -1,5 +1,6 @@
 ﻿using Netherite.Entities;
 using Netherite.Net.IO;
+using Netherite.Texts;
 using Netherite.Utils;
 using System;
 using System.Text;
@@ -15,8 +16,15 @@ namespace Netherite.Net.Packets.Play
 
         public override Task HandleAsync(Server server, Player player)
         {
-            Logger.Log($"Plugin channel: \u00a76{Channel}: \u00a7a" + Encoding.UTF8.GetString(Data));
-            Logger.Log($"Hex: " + DebugHelper.HexDump(Data));
+            Logger.Log(
+                TranslateText.Of("Plugin channel: {0}: {1}")
+                    .AddWith(LiteralText.Of(Channel).SetColor(TextColor.Gold))
+                    .AddWith(LiteralText.Of(Encoding.UTF8.GetString(Data)).SetColor(TextColor.DarkGray))
+                );
+            Logger.Log(
+                TranslateText.Of("Hex: {0}")
+                    .AddWith(LiteralText.Of(DebugHelper.HexDump(Data)).SetColor(TextColor.DarkGray))
+                );
             return Task.CompletedTask;
         }
     }

@@ -9,6 +9,7 @@ using Netherite.Net.Packets.Play;
 using Netherite.Net.Packets.Play.Clientbound;
 using Netherite.Net.Packets.Play.Serverbound;
 using Netherite.Net.Protocols;
+using Netherite.Texts;
 using Netherite.Utils;
 using Newtonsoft.Json;
 using System;
@@ -352,8 +353,15 @@ namespace Netherite.Protocols.v47
 
             RegisterOutgoing<PluginMessage>((p, writer) =>
             {
-                Console.WriteLine($"[Netherite] Plugin channel: {p.Channel}: " + Encoding.UTF8.GetString(p.Data));
-                Console.WriteLine($"[Netherite] Hex: " + DebugHelper.HexDump(p.Data));
+                Logger.Log(
+                    TranslateText.Of("Plugin channel: {0}: {1}")
+                        .AddWith(LiteralText.Of(p.Channel).SetColor(TextColor.Gold))
+                        .AddWith(LiteralText.Of(Encoding.UTF8.GetString(p.Data)).SetColor(TextColor.DarkGray))
+                    );
+                Logger.Log(
+                    TranslateText.Of("Hex: {0}")
+                        .AddWith(LiteralText.Of(DebugHelper.HexDump(p.Data)).SetColor(TextColor.DarkGray))
+                    );
 
                 writer.WriteString(p.Channel);
                 foreach(byte b in p.Data)
