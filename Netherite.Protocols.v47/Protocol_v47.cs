@@ -296,6 +296,17 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x23);
             });
 
+            RegisterOutgoing<PlaySoundEffect>((p, writer) =>
+            {
+                writer.WriteString(p.Sound);
+                writer.WriteInt((int)p.X * 8);
+                writer.WriteInt((int)p.Y * 8);
+                writer.WriteInt((int)p.Z * 8);
+                writer.WriteFloat(p.Volume);
+                writer.WriteByte((byte)(63 * p.Pitch));
+                writer.Flush(0x29);
+            });
+
             RegisterOutgoing<PlayerInfo>((p, writer) =>
             {
                 writer.WriteVarInt((int)p.Action);
@@ -364,7 +375,7 @@ namespace Netherite.Protocols.v47
                     );
 
                 writer.WriteString(p.Channel);
-                foreach(byte b in p.Data)
+                foreach (byte b in p.Data)
                 {
                     writer.WriteByte(b);
                 }
@@ -376,6 +387,49 @@ namespace Netherite.Protocols.v47
             {
                 writer.WriteChat(p.Reason);
                 writer.Flush(0x40);
+            });
+
+            RegisterOutgoing<DisplayTitle>((p, writer) =>
+            {
+                writer.WriteVarInt((int)p.Action);
+
+                switch(p.Action)
+                {
+                    case DisplayTitle.PacketAction.SetTitle:
+                        writer.WriteChat(p.Title);
+                        break;
+                    case DisplayTitle.PacketAction.SetSubtitle:
+                        writer.WriteChat(p.Subtitle);
+                        break;
+                    case DisplayTitle.PacketAction.SetTimesAndDisplay:
+                        writer.WriteInt(p.FadeIn);
+                        writer.WriteInt(p.Stay);
+                        writer.WriteInt(p.FadeOut);
+                        break;
+                }
+
+                writer.Flush(0x45);
+            });
+
+            RegisterOutgoing<PlayerListHeaderAndFooter>((p, writer) =>
+            {
+                writer.WriteChat(p.Header);
+                writer.WriteChat(p.Footer);
+                writer.Flush(0x47);
+            });
+
+            RegisterOutgoing<ResourcePackSend>((p, writer) =>
+            {
+                writer.WriteString(p.Url);
+                writer.WriteString(p.Hash);
+                writer.Flush(0x48);
+            });
+
+            RegisterOutgoing<EntityNBT>((p, writer) =>
+            {
+                writer.WriteVarInt(p.Entity.Handle);
+                writer.WriteNbt(p.Tag);
+                writer.Flush(0x49);
             });
             #endregion
         }
