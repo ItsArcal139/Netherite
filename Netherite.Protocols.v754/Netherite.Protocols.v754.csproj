@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Configurations>Debug;Release;Debug Packet</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\blocks.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\blocks.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Netherite\Netherite.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,16 @@
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.csprojAssemblyReference.cache
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.AssemblyInfoInputs.cache
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.AssemblyInfo.cs
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.csproj.CoreCompileInputs.cache
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.Test.exe
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.Test.deps.json
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.Test.runtimeconfig.json
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.Test.runtimeconfig.dev.json
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.Test.dll
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.Test.pdb
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.dll
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\bin\Debug\netcoreapp3.1\Netherite.Nbt.pdb
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.csproj.CopyComplete
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.dll
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.pdb
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt.Test\obj\Debug\netcoreapp3.1\Netherite.Nbt.Test.genruntimeconfig.cache

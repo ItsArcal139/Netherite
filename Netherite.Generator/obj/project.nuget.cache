@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "y70Ho9WnRvsytJUoK4quGr/I2vimGbsyxe1fizUx/YSa2U+gWlwspFGhWklMG+v3zyXm83wq7LV5umVuiSJAFA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Kaka\\source\\repos\\Netherite\\Netherite.Generator\\Netherite.Generator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Kaka\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

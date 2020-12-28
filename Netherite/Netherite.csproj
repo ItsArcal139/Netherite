@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Configurations>Debug;Release;Debug Packet</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Packet|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;DEBUG_PACKET</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\crypto\BouncyCastle.csproj" />
+    <ProjectReference Include="..\Netherite.Api\Netherite.Api.csproj" />
+    <ProjectReference Include="..\Netherite.Nbt\Netherite.Nbt.csproj" />
+  </ItemGroup>
+
+</Project>
