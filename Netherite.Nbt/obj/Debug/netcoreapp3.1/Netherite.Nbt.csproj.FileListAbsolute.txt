@@ -1,0 +1,8 @@
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\bin\Debug\netcoreapp3.1\Netherite.Nbt.deps.json
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\bin\Debug\netcoreapp3.1\Netherite.Nbt.dll
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\bin\Debug\netcoreapp3.1\Netherite.Nbt.pdb
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\obj\Debug\netcoreapp3.1\Netherite.Nbt.AssemblyInfoInputs.cache
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\obj\Debug\netcoreapp3.1\Netherite.Nbt.AssemblyInfo.cs
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\obj\Debug\netcoreapp3.1\Netherite.Nbt.csproj.CoreCompileInputs.cache
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\obj\Debug\netcoreapp3.1\Netherite.Nbt.dll
+C:\Users\Kaka\source\repos\Netherite\Netherite.Nbt\obj\Debug\netcoreapp3.1\Netherite.Nbt.pdb
