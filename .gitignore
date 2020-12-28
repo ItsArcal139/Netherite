@@ -1,2 +1,7 @@
-crypto/*.**
+/crypto/*.**
 /crypto
+/.vs/*.**
+/bin
+/obj
+*/bin/*.**
+*/obj/*.**
