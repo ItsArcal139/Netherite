@@ -23,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nbt", "Nbt", "{BA6925D3-955
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{6EA4B8E2-2022-4898-A50C-E09A67F3B8D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Netherite.Generator", "Netherite.Generator\Netherite.Generator.csproj", "{AD1AB915-C294-4C9D-A6D2-6A1332E23C20}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netherite.Generator", "Netherite.Generator\Netherite.Generator.csproj", "{AD1AB915-C294-4C9D-A6D2-6A1332E23C20}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle", "crypto\BouncyCastle.csproj", "{4C235092-820C-4DEB-9074-D356FB797D8B}"
 EndProject
