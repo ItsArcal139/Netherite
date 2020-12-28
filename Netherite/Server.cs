@@ -19,6 +19,8 @@ namespace Netherite
 
         public bool OnlineMode { get; set; } = false;
 
+        public int Port { get; set; } = 25565;
+
         public Server()
         {
             if (Instance != null)
@@ -27,7 +29,7 @@ namespace Netherite
             }
             Instance = this;
 
-            NetworkManager = new NetworkManager(this, 25565);
+            NetworkManager = new NetworkManager(this, Port);
 
             Worlds.Add(new World());
         }
