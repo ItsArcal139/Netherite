@@ -1,5 +1,6 @@
 ﻿using Netherite.Api.Worlds;
 using Netherite.Blocks;
+using Netherite.Data.Nbt;
 using System;
 
 namespace Netherite.Worlds
@@ -10,15 +11,30 @@ namespace Netherite.Worlds
 
         public int Z { get; private set; }
 
-        public IWorld World { get; private set; }
+        public IWorld World => Region.World;
 
-        internal Chunk(World world, int x, int z)
+        public Region Region { get; private set; }
+
+        internal Chunk(Region region, int x, int z)
         {
-            World = world;
+            Region = region;
             X = x;
             Z = z;
 
             FillYWithBlock(0, new Block(Material.OakPlanks));
+        }
+
+        internal Chunk(Region region, int x, int z, NbtLevel level)
+        {
+            Region = region;
+            X = x;
+            Z = z;
+
+            foreach(var section in level.Sections)
+            {
+                var y = section.Y;
+                Sections[y] = new ChunkSection(this, section);
+            }
         }
 
         public ChunkSection[] Sections { get; set; } = new ChunkSection[16];
@@ -43,16 +59,7 @@ namespace Netherite.Worlds
             GetChunkSectionByPosY(y).SetBlock(x, sy, z, b);
         }
 
-        public void FillYWithBlock(int y, Block b)
-        {
-            for(int x = 0; x < 16; x++)
-            {
-                for(int z = 0; z < 16; z++)
-                {
-                    SetBlock(x, y, z, b);
-                }
-            }
-        }
+        public void FillYWithBlock(int y, Block b) => GetChunkSectionByPosY(y).FillYWithBlock(y % 16, b);
 
         public ChunkSection GetChunkSectionByPosY(int y)
         {

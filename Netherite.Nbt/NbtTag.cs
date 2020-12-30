@@ -4,8 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Netherite.Nbt
 {
-
-    public abstract class NbtTag
+    public abstract class NbtTag : INbtTag
     {
         public byte RawType { get; private set; }
 
@@ -26,6 +25,8 @@ namespace Netherite.Nbt
         {
             switch (type ?? (TagType)NbtIO.ReadByte(buffer, ref index))
             {
+                case TagType.End:
+                    return null;
                 case TagType.Byte:
                     return NbtByte.Deserialize(buffer, ref index, named);
                 case TagType.Short:
@@ -51,7 +52,7 @@ namespace Netherite.Nbt
                 case TagType.LongArray:
                     return NbtLongArray.Deserialize(buffer, ref index, named);
             }
-            throw new ArgumentException("Unknown type " + buffer[index]);
+            throw new ArgumentException($"Unknown type {buffer[index]} at index {index}: {(char)buffer[index]}");
         }
 
         protected static void InternalDeserializePhaseA(byte[] buffer, ref int index, bool named, TagType target, NbtTag instance)

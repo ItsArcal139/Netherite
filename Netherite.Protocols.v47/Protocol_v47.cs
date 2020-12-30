@@ -1,6 +1,7 @@
 ﻿using Netherite.Auth.Properties;
 using Netherite.Data.Entities;
 using Netherite.Entities;
+using Netherite.Nbt;
 using Netherite.Nbt.Serializations;
 using Netherite.Net.IO;
 using Netherite.Net.Packets;
@@ -9,6 +10,7 @@ using Netherite.Net.Packets.Play;
 using Netherite.Net.Packets.Play.Clientbound;
 using Netherite.Net.Packets.Play.Serverbound;
 using Netherite.Net.Protocols;
+using Netherite.Physics;
 using Netherite.Texts;
 using Netherite.Utils;
 using Newtonsoft.Json;
@@ -19,6 +21,32 @@ using System.Text;
 
 namespace Netherite.Protocols.v47
 {
+    public static class BufferReaderExtension
+    {
+        public static ItemStack ReadSlot(this BufferReader reader)
+        {
+            var id = reader.ReadShort();
+            ItemStack item;
+
+            if (id == -1)
+            {
+                item = null;
+            }
+            else
+            {
+                item = new ItemStack();
+                item.Count = reader.ReadByte();
+                short data = reader.ReadShort();
+
+                item.Material = LegacyMaterial.FromID(id, (byte)data).Material;
+
+                item.Data = (NbtCompound)reader.ReadNbt();
+            }
+
+            return item;
+        }
+    }
+
     public class Protocol_v47 : Protocol
     {
         public override int Version => 47;
@@ -83,6 +111,22 @@ namespace Netherite.Protocols.v47
                 };
             });
 
+            RegisterIncoming(PacketState.Play, 0x08, reader =>
+            {
+                return new BlockPlace
+                {
+                    Position = reader.ReadLocation(),
+                    Face = reader.ReadByte(),
+                    HeldItem = reader.ReadSlot(),
+                    CursorPosition = new Vector3
+                    {
+                        X = reader.ReadByte(),
+                        Y = reader.ReadByte(),
+                        Z = reader.ReadByte()
+                    }
+                };
+            });
+
             RegisterIncoming(PacketState.Play, 0x0a, reader => new AnimationIn());
 
             RegisterIncoming(PacketState.Play, 0x0b, reader =>
@@ -92,6 +136,15 @@ namespace Netherite.Protocols.v47
                     Entity = Entity.GetById(reader.ReadVarInt()),
                     ActionID = reader.ReadVarInt(),
                     ActionParam = reader.ReadVarInt()
+                };
+            });
+
+            RegisterIncoming(PacketState.Play, 0x10, reader =>
+            {
+                return new CreativeInventoryAction
+                {
+                    Slot = (byte)reader.ReadShort(),
+                    ItemStack = reader.ReadSlot()
                 };
             });
 
@@ -144,7 +197,7 @@ namespace Netherite.Protocols.v47
 
             RegisterOutgoing<JoinGame>((p, writer) =>
             {
-                writer.WriteInt(p.EntityID);
+                writer.WriteInt(p.Player.Handle);
 
                 byte mode = (byte)p.Mode;
                 if (p.IsHardcore)
@@ -155,7 +208,7 @@ namespace Netherite.Protocols.v47
 
                 writer.WriteByte(0); // overworld
                 writer.WriteByte(0); // peaceful
-                writer.WriteByte(1);
+                writer.WriteByte(10); // max players?
                 writer.WriteString("flat");
                 writer.WriteBool(false);
 
@@ -167,6 +220,16 @@ namespace Netherite.Protocols.v47
                 writer.WriteString(JsonConvert.SerializeObject(p.Message));
                 writer.WriteByte((byte)p.Position);
                 writer.Flush(0x02);
+            });
+
+            RegisterOutgoing<PerformRespawn>((p, writer) =>
+            {
+                writer.WriteInt(p.Dimension);
+                writer.WriteByte(p.Difficulty);
+                writer.WriteByte((byte)p.Mode);
+                writer.WriteString(p.WorldName.ToString());
+
+                writer.Flush(0x07);
             });
 
             RegisterOutgoing<PlayerPositionAndLook>((p, writer) =>
@@ -276,7 +339,10 @@ namespace Netherite.Protocols.v47
             RegisterOutgoing<EntityMetadataPacket>((p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
-                p.Metadata.Write(writer);
+
+                var w = EntityMetadataWriter.GetWriter(p.Metadata, writer);
+                w.Write();
+
                 writer.WriteByte(127);
 
                 writer.Flush(0x1c);
@@ -292,7 +358,10 @@ namespace Netherite.Protocols.v47
             RegisterOutgoing<BlockChange>((p, writer) =>
             {
                 writer.WriteIntPos(p.Position);
-                writer.WriteByte((byte)(p.BlockID << 4 | p.Meta & 0xf));
+
+                LegacyMaterial m = LegacyMaterial.FromMaterial(p.Material);
+
+                writer.WriteByte((byte)(m.Id << 4 | m.Data & 0xf));
                 writer.Flush(0x23);
             });
 
@@ -393,7 +462,7 @@ namespace Netherite.Protocols.v47
             {
                 writer.WriteVarInt((int)p.Action);
 
-                switch(p.Action)
+                switch (p.Action)
                 {
                     case DisplayTitle.PacketAction.SetTitle:
                         writer.WriteChat(p.Title);

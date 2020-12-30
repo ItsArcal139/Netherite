@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace Netherite.Nbt
@@ -58,9 +59,9 @@ namespace Netherite.Nbt
 
         internal static ushort ReadUShort(byte[] buffer, ref int index)
         {
-            uint a = ReadByte(buffer, ref index);
-            uint b = ReadByte(buffer, ref index);
-            return (ushort)(a << 16 | b);
+            byte a = ReadByte(buffer, ref index);
+            byte b = ReadByte(buffer, ref index);
+            return (ushort)(a << 8 | b);
         }
 
         internal static uint ReadUInt(byte[] buffer, ref int index)
@@ -114,11 +115,19 @@ namespace Netherite.Nbt
 
         internal static string ReadString(byte[] buffer, ref int index)
         {
-            ushort length = ReadUShort(buffer, ref index);
-            byte[] result = new byte[length];
-            Array.Copy(buffer, index, result, 0, length);
-            index += (int)length;
-            return Encoding.UTF8.GetString(result);
+            try
+            {
+                ushort length = ReadUShort(buffer, ref index);
+                byte[] result = new byte[length];
+                Array.Copy(buffer, index, result, 0, length);
+                index += (int)length;
+                return Encoding.UTF8.GetString(result);
+            } catch(Exception ex)
+            {
+                File.WriteAllBytes("ChunkDump.nbt", buffer);
+                Console.WriteLine(ex);
+                return null;
+            }
         }
 
         internal static byte Peek(byte[] buffer, ref int index)

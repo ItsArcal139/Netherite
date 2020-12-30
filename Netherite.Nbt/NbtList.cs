@@ -54,10 +54,11 @@ namespace Netherite.Nbt
             NbtList result = new NbtList();
             InternalDeserializePhaseA(buffer, ref index, named, TagType.List, result);
             TagType type = (TagType)NbtIO.ReadByte(buffer, ref index);
+            result.ContentType = type;
             int count = NbtIO.ReadInt(buffer, ref index);
             for (int i = 0; i < count; i++)
             {
-                result.Add(NbtTag.Deserialize(buffer, ref index, false, type));
+                result.Add(Deserialize(buffer, ref index, false, type));
             }
             return result;
         }

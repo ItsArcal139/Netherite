@@ -78,6 +78,8 @@ namespace Netherite.Nbt.Serializations
 
         public static string SerializeToString<T>(T obj)
         {
+            if (obj == null) return "";
+
             StringSerializer serializer = new StringSerializer();
             object o = Reflections.ToSerializable(obj);
             NbtTag tag = ToNbt(o);
@@ -93,6 +95,11 @@ namespace Netherite.Nbt.Serializations
         internal static object InternalDeserialize(Type t, NbtTag tag)
         {
             if (t == null) return null;
+
+            if (typeof(NbtCompound) == t)
+            {
+                return t;
+            }
 
             if (typeof(byte) == t)
             {
@@ -140,6 +147,12 @@ namespace Netherite.Nbt.Serializations
             {
                 if (!(tag is NbtString)) throw new InvalidOperationException("Cannot cast " + (NbtTag.TagType)tag.RawType + " into float");
                 return ((NbtString)tag).Value;
+            }
+
+            if (typeof(int[]) == t)
+            {
+                if (!(tag is NbtIntArray)) throw new InvalidOperationException("Cannot cast " + (NbtTag.TagType)tag.RawType + " into int[]");
+                return ((NbtIntArray)tag).Value;
             }
 
             if (typeof(long[]) == t)
@@ -236,6 +249,12 @@ namespace Netherite.Nbt.Serializations
         {
             int _i = index;
             NbtTag tag = NbtTag.Deserialize(arr, ref _i, named);
+            
+            if (typeof(NbtTag).IsAssignableFrom(t))
+            {
+                return tag;
+            }
+
             return InternalDeserialize(t, tag);
         }
 
@@ -252,8 +271,29 @@ namespace Netherite.Nbt.Serializations
             return default(T);
         }
 
+        public static T Deserialize<T>(NbtTag tag)
+        {
+            if (typeof(NbtTag).IsAssignableFrom(typeof(T)))
+            {
+                return (T)(object)tag;
+            }
+
+            object result = InternalDeserialize(typeof(T), tag);
+
+            if (result.GetType() == typeof(T)) return (T)result;
+
+            if (result is Dictionary<string, object>)
+            {
+                return (T)CastFromDictionary(typeof(T), (Dictionary<string, object>)result);
+            }
+
+            return default(T);
+        }
+
         private static NbtTag FromObject(object obj)
         {
+            if (obj is NbtTag n) return n;
+
             int index = 0;
             return NbtTag.Deserialize(SerializeToBuffer(obj), ref index);
         }
@@ -261,6 +301,19 @@ namespace Netherite.Nbt.Serializations
         private static object CastFromDictionary(Type t, Dictionary<string, object> dict)
         {
             object result = Activator.CreateInstance(t);
+
+            if(result is NbtCompound c)
+            {
+                foreach(var pair in dict)
+                {
+                    if (pair.Value != null)
+                    {
+                        c.Add(pair.Key, FromObject(pair.Value));
+                    }
+                }
+                return result;
+            }
+
             var props = t.GetProperties();
             foreach(var prop in props)
             {
@@ -277,11 +330,41 @@ namespace Netherite.Nbt.Serializations
                     if (dict.ContainsKey(prop.Name))
                     {
                         var val = dict[prop.Name];
+
                         if (val is Dictionary<string, object>)
                         {
                             val = CastFromDictionary(prop.PropertyType, (Dictionary<string, object>)val);
                         }
-                        prop.SetValue(result, val);
+
+                        if(val is byte && prop.PropertyType == typeof(bool))
+                        {
+                            val = ((byte)val == 1) ? true : false;
+                        }
+
+                        if(val is ICollection && !(val is Array) || Reflections.IsTypeOfGenericType(typeof(ICollection<>), prop.PropertyType))
+                        {
+                            Type related = prop.PropertyType.GetGenericArguments()[0];
+                            Type listType = typeof(List<>).MakeGenericType(new Type[] { related });
+
+                            object list = listType.GetConstructor(new Type[0]).Invoke(new object[0]);
+                            int count = (int)val.GetType().GetProperty("Count").GetValue(val);
+
+                            for (int i=0; i<count; i++)
+                            {
+                                var child = val.GetType().GetProperty("Item").GetValue(val, new object[] { i });
+                                listType.GetMethod("Add").Invoke(list, new object[] { CastFromDictionary(related, child as Dictionary<string, object>) });
+                            }
+
+                            val = list;
+                        }
+
+                        try
+                        {
+                            prop.SetValue(result, val);
+                        } catch(Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
                     }
                 }
             }

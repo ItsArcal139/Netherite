@@ -15,11 +15,41 @@ namespace Netherite.Worlds
 
         public long Seed { get; set; }
 
-        public Chunk GetChunk(int x, int z) => new Chunk(this, x, z);
+        private Dictionary<(int, int), Region> regions = new Dictionary<(int, int), Region>();
 
-        public Block GetBlock(int x, int y, int z) => GetChunk(x, z).GetBlock(x % 16, y, z % 16);
+        public Region GetRegion(int blockX, int blockZ)
+        {
+            int rx = (int)Math.Floor((double)blockX / 512);
+            int rz = (int)Math.Floor((double)blockZ / 512);
 
-        public void SetBlock(int x, int y, int z, Block b) => GetChunk(x, z).SetBlock(x % 16, y, z % 16, b);
+            if (!regions.ContainsKey((rx, rz)))
+            {
+                var r = Region.ReadFromFile($"World/region/r.{rx}.{rz}.mca", this, rx, rz);
+                regions.Add((rx, rz), r);
+                return r;
+            } else
+            {
+                return regions[(rx, rz)];
+            }
+        }
+
+        public Chunk GetChunk(int x, int z)
+        {
+            var region = GetRegion(x * 16, z * 16);
+            return region.GetChunk(x, z);
+        }
+
+        public Chunk GetChunkByBlockPos(int blockX, int blockZ)
+        {
+            var region = GetRegion(blockX, blockZ);
+            int cx = (int)Math.Floor((double)blockX / 16);
+            int cz = (int)Math.Floor((double)blockZ / 16);
+            return region.GetChunk(cx, cz);
+        }
+
+        public Block GetBlock(int x, int y, int z) => GetChunkByBlockPos(x, z).GetBlock(x % 16, y, z % 16);
+
+        public void SetBlock(int x, int y, int z, Block b) => GetChunkByBlockPos(x, z).SetBlock(x % 16, y, z % 16, b);
 
         public Entity SpawnEntity<T>() where T : Entity => throw new NotImplementedException();
     }

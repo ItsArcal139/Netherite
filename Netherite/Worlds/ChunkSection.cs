@@ -1,4 +1,6 @@
 ﻿using Netherite.Blocks;
+using Netherite.Data.Nbt;
+using Netherite.Utils;
 using System;
 using System.Linq;
 
@@ -16,6 +18,10 @@ namespace Netherite.Worlds
 
         public Block[] Blocks { get; private set; } = new Block[4096];
 
+        public NibbleArray SkyLight { get; internal set; }
+
+        public NibbleArray BlockLight { get; internal set; }
+
         internal ChunkSection(Chunk chunk, short yFlag)
         {
             Chunk = chunk;
@@ -23,6 +29,29 @@ namespace Netherite.Worlds
             YFlag = yFlag;
 
             Array.Fill(Blocks, new Block(Material.Air));
+        }
+
+        internal ChunkSection(Chunk chunk, NbtLevel.NbtSection section)
+        {
+            Chunk = chunk;
+            YFlag = (short)(1 << section.Y);
+
+            byte[] buf = section.Blocks;
+            NibbleArray dataBuf = new NibbleArray(section.Data);
+
+            for (int i = 0; i < 4096; i++)
+            {
+                byte id = buf[i];
+                byte data = dataBuf[i];
+
+                var lm = LegacyMaterial.FromID(id, data);
+                Block b = new Block(lm.Material);
+
+                Blocks[i] = b;
+            }
+
+            SkyLight = new NibbleArray(section.SkyLight);
+            BlockLight = new NibbleArray(section.SkyLight);
         }
 
         private void ValidateYFlag(short flag)
@@ -40,6 +69,17 @@ namespace Netherite.Worlds
         public Block GetBlock(int x, int y, int z) => Blocks[ToOneDimensionIndex(x, y, z)];
 
         public void SetBlock(int x, int y, int z, Block b) => Blocks[ToOneDimensionIndex(x, y, z)] = b;
+
+        public void FillYWithBlock(int y, Block b)
+        {
+            for (int x = 0; x < 16; x++)
+            {
+                for (int z = 0; z < 16; z++)
+                {
+                    SetBlock(x, y, z, b);
+                }
+            }
+        }
 
         private int ToOneDimensionIndex(int x, int y, int z) => (y * 16 + z) * 16 + x;
 

@@ -7,43 +7,71 @@ namespace Netherite.Nbt
 {
     public class NbtCompound : NbtTag, IDictionary<string, NbtTag>
     {
-        public NbtTag this[string key] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public NbtTag this[string key]
+        {
+            get => children.Find(tag => tag.Name == key);
+            set
+            {
+                // Should I respect C# standard, which throws error
+                // when old item is not found?
 
-        public ICollection<string> Keys => dict.Keys;
+                NbtTag old = this[key];
+                if (old != null)
+                {
+                    children.Remove(old);
+                }
 
-        public ICollection<NbtTag> Values => dict.Values;
+                value.Name = key;
+                children.Add(value);
+            }
+        }
 
-        public int Count => dict.Count;
+        public ICollection<string> Keys => children.ConvertAll(tag => tag.Name);
+
+        public ICollection<NbtTag> Values => children.ConvertAll(t => t);
+
+        public int Count => children.Count;
 
         public bool IsReadOnly => false;
 
         public void Add(string key, NbtTag value)
         {
-            dict.Add(key, value);
+            this[key] = value;
             value.Name = key;
         }
 
-        public void Add(KeyValuePair<string, NbtTag> item) => dict.Add(item.Key, item.Value);
+        public void Add(KeyValuePair<string, NbtTag> item) => Add(item.Key, item.Value);
 
-        public void Clear() => dict.Clear();
+        public void Clear() => children.Clear();
 
-        public bool Contains(KeyValuePair<string, NbtTag> item) => throw new NotImplementedException();
+        public bool Contains(KeyValuePair<string, NbtTag> item) => ContainsKey(item.Key);
 
-        public bool ContainsKey(string key) => dict.ContainsKey(key);
+        public bool ContainsKey(string key) => this[key] != null;
 
-        public void CopyTo(KeyValuePair<string, NbtTag>[] array, int arrayIndex) => throw new NotImplementedException();
+        public void CopyTo(KeyValuePair<string, NbtTag>[] array, int arrayIndex)
+        {
+            foreach (var pair in children.ConvertAll(t => new KeyValuePair<string, NbtTag>(t.Name, t)))
+            {
+                array[arrayIndex++] = pair;
+            }
+        }
 
-        public IEnumerator<KeyValuePair<string, NbtTag>> GetEnumerator() => dict.GetEnumerator();
+        public IEnumerator<KeyValuePair<string, NbtTag>> GetEnumerator() => children.ConvertAll(t => new KeyValuePair<string, NbtTag>(t.Name, t)).GetEnumerator();
 
-        public bool Remove(string key) => dict.Remove(key);
+        public bool Remove(string key) => children.Remove(this[key]);
 
-        public bool Remove(KeyValuePair<string, NbtTag> item) => throw new NotImplementedException();
+        public bool Remove(KeyValuePair<string, NbtTag> item) => Remove(item.Key);
 
-        public bool TryGetValue(string key, [MaybeNullWhen(false)] out NbtTag value) => dict.TryGetValue(key, out value);
+        public bool TryGetValue(string key, [MaybeNullWhen(false)] out NbtTag value)
+        {
+            value = this[key];
+            return value != null;
+            ;
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => dict.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => children.GetEnumerator();
 
-        private Dictionary<string, NbtTag> dict = new Dictionary<string, NbtTag>();
+        private List<NbtTag> children = new List<NbtTag>();
 
         public NbtCompound() : base(10) { }
 

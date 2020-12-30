@@ -1,6 +1,6 @@
 ﻿namespace Netherite.Nbt
 {
-    public class NbtInt : NbtTag
+    public class NbtInt : NbtTag, INbtValue<int>
     {
         public NbtInt() : base(3) { }
 
