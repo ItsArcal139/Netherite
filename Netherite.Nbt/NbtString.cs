@@ -24,5 +24,10 @@
             string name = Name == null ? "None" : $"'{Name}'";
             return $"TAG_String({name}): '{Value}'";
         }
+
+        public override string ToValue()
+        {
+            return Value;
+        }
     }
 }

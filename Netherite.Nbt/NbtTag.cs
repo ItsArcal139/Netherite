@@ -64,5 +64,10 @@ namespace Netherite.Nbt
         }
 
         public new abstract string ToString();
+
+        public virtual string ToValue()
+        {
+            return "";
+        }
     }
 }
