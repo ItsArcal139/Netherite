@@ -1,4 +1,5 @@
 ﻿using Netherite.Blocks;
+using Netherite.Data.Entities;
 using Netherite.Data.Nbt;
 using Netherite.Utils;
 using System;
@@ -28,7 +29,10 @@ namespace Netherite.Worlds
             ValidateYFlag(yFlag);
             YFlag = yFlag;
 
-            Array.Fill(Blocks, new Block(Material.Air));
+            Array.Fill(Blocks, new Block(new BlockState
+            {
+                Id = new Identifier("air")
+            }));
         }
 
         internal ChunkSection(Chunk chunk, NbtLevel.NbtSection section)
@@ -36,18 +40,36 @@ namespace Netherite.Worlds
             Chunk = chunk;
             YFlag = (short)(1 << section.Y);
 
-            byte[] buf = section.Blocks;
-            NibbleArray dataBuf = new NibbleArray(section.Data);
+            long[] buf = section.BlockStates;
+
+            NibbleArray blocks = new NibbleArray(4096);
+
+            for (int i = 0; i < 256; i++)
+            {
+                long l = buf[i];
+
+                byte[] data = BitConverter.GetBytes(l);
+                if (BitConverter.IsLittleEndian)
+                {
+                    Array.Reverse(data);
+                }
+
+                for (int j = 0; j < 8; j++)
+                {
+                    blocks.Data[i * 8 + j] = data[j];
+                }
+            }
+
+            var palette = section.Palette;
 
             for (int i = 0; i < 4096; i++)
             {
-                byte id = buf[i];
-                byte data = dataBuf[i];
+                byte b = blocks[i];
+                NbtBlockState bs = palette[b];
 
-                var lm = LegacyMaterial.FromID(id, data);
-                Block b = new Block(lm.Material);
+                BlockState s = BlockState.FromNbt(bs);
 
-                Blocks[i] = b;
+                Blocks[i] = new Block(s);
             }
 
             SkyLight = new NibbleArray(section.SkyLight);
@@ -56,9 +78,9 @@ namespace Netherite.Worlds
 
         private void ValidateYFlag(short flag)
         {
-            for(int i=0; i<16; i++)
+            for (int i = 0; i < 16; i++)
             {
-                if(Math.Pow(2, i) == flag)
+                if (Math.Pow(2, i) == flag)
                 {
                     return;
                 }
@@ -83,7 +105,7 @@ namespace Netherite.Worlds
 
         private int ToOneDimensionIndex(int x, int y, int z) => (y * 16 + z) * 16 + x;
 
-        public int Count => Blocks.Sum(b => b.Material == Material.Air ? 0 : 1);
+        public int Count => Blocks.Sum(b => b.State.Id.Key == "air" ? 0 : 1);
 
         public bool IsEmpty => Count == 0;
     }

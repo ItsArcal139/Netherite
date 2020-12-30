@@ -15,11 +15,11 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="SharpCompress" Version="0.26.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\crypto\BouncyCastle.csproj" />
-    <ProjectReference Include="..\Netherite.Api\Netherite.Api.csproj" />
     <ProjectReference Include="..\Netherite.Nbt\Netherite.Nbt.csproj" />
   </ItemGroup>
 
