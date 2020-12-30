@@ -55,7 +55,7 @@ namespace Netherite.Net.Packets.Play.Serverbound
             var blockPos = Position + offset;
 
             Logger.Log($"Place a block {HeldItem?.Material} at pos {blockPos}");
-            player.World.SetBlock((int)blockPos.X, (int)blockPos.Y, (int)blockPos.Z, new Block(HeldItem.Material));
+            // player.World.SetBlock((int)blockPos.X, (int)blockPos.Y, (int)blockPos.Z, new Block());
 
             foreach(var p in server.OnlinePlayers)
             {

@@ -84,18 +84,18 @@ namespace Netherite.Protocols.v754
                 writer.WriteDouble(p.Entity.Position.X);
                 writer.WriteDouble(p.Entity.Position.Y);
                 writer.WriteDouble(p.Entity.Position.Z);
-                // writer.WriteAngle(); // Pitch
-                // writer.WriteAngle(); // Yaw
-                // writer.WriteInt();   // Data
-                // writer.WriteShort(); // Velocity X
-                // writer.WriteShort(); // Velocity Y
-                // writer.WriteShort(); // Velocity Z
+                writer.WriteAngle(p.Entity.Pitch);
+                writer.WriteAngle(p.Entity.Yaw);
+                writer.WriteInt(0);   // Data
+                writer.WriteShort(0); // Velocity X
+                writer.WriteShort(0); // Velocity Y
+                writer.WriteShort(0); // Velocity Z
                 writer.Flush(0x00);
             });
 
             RegisterOutgoing<ChatPacket>((p, writer) =>
             {
-                writer.WriteString(JsonConvert.SerializeObject(p.Message));
+                writer.WriteChat(p.Message);
                 writer.WriteByte((byte)p.Position);
                 writer.WriteGuid(p.SenderGuid);
                 writer.Flush(0x0e);
@@ -109,7 +109,7 @@ namespace Netherite.Protocols.v754
 
             RegisterOutgoing<JoinGame>((p, writer) =>
             {
-                writer.WriteInt(p.EntityID);
+                writer.WriteInt(p.Player.Handle);
                 writer.WriteBool(p.IsHardcore);
                 writer.WriteByte((byte)p.Mode);
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Netherite.Physics;
+using System;
 using System.Text;
 
 namespace Netherite.Net.IO
@@ -160,16 +161,58 @@ namespace Netherite.Net.IO
         public ushort ReadUShort(out int length)
         {
             int o = index;
-            ushort result = 0;
-            result = (ushort)(result | buffer[index++]);
-            result = (ushort)(result << 8 | buffer[index++]);
+            int result = 0;
+            result = result | buffer[index++];
+            result = result << 8 | buffer[index++];
             length = index - o;
-            return result;
+            return (ushort)result;
         }
 
         public ushort ReadUShort()
         {
             return ReadUShort(out int _);
+        }
+
+        public short ReadShort(out int length)
+        {
+            int o = index;
+            int result = 0;
+            result = result | buffer[index++];
+            result = result << 8 | buffer[index++];
+            length = index - o;
+            return (short)result;
+        }
+
+        public short ReadShort() => ReadShort(out _);
+
+        public Vector3 ReadLocation(out int length)
+        {
+            long val = ReadLong(out length);
+            long x = val >> 38;
+            long y = (val >> 26) & 0xFFF;
+            long z = val << 38 >> 38;
+
+            if (x >= 1 << 25)
+            {
+                x -= 1 << 26;
+            }
+
+            if (y >= 1 << 11)
+            {
+                y -= 1 << 12;
+            }
+
+            if (z >= 1 << 25)
+            {
+                z -= 1 << 26;
+            }
+
+            return new Vector3
+            {
+                X = x,
+                Y = y,
+                Z = z
+            };
         }
     }
 }

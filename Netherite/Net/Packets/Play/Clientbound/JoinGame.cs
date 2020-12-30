@@ -1,4 +1,5 @@
 ﻿using Netherite.Data.Entities;
+using Netherite.Entities;
 using Netherite.Worlds;
 using System.Collections.Generic;
 
@@ -6,7 +7,7 @@ namespace Netherite.Net.Packets.Play.Clientbound
 {
     public class JoinGame : Packet
     {
-        public int EntityID { get; set; }
+        public Player Player { get; set; }
 
         public bool IsHardcore { get; set; }
 

@@ -8,6 +8,9 @@ namespace Netherite.Protocols.v754
 {
     public partial class Registry
     {
-        public Block GetBlock(short state) => new Block((Material)StateToMatch[state].Numeric);
+        public Block GetBlock(short state) => new Block(new BlockState
+        {
+            Id = Blocks[StateToMatch[state].Numeric]
+        });
     }
 }

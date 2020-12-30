@@ -28,6 +28,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Numerics;
 using Vector3 = Netherite.Physics.Vector3;
+using Netherite.Blocks;
 
 namespace Netherite.Net
 {
@@ -316,7 +317,7 @@ namespace Netherite.Net
 
             var join = new JoinGame
             {
-                EntityID = Player.Handle,
+                Player = Player,
                 IsHardcore = false,
                 Mode = GameMode.Adventure,
                 PreviousMode = null,
@@ -370,8 +371,10 @@ namespace Netherite.Net
                     Y = 1,
                     Z = 0
                 },
-                BlockID = 2,
-                Meta = 0
+                State = new BlockState
+                {
+                    Id = new Identifier("grass_block")
+                }
             });
 
             Player.Position = new Vector3(0.5, 3, 0.5);

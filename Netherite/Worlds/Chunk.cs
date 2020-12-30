@@ -20,8 +20,6 @@ namespace Netherite.Worlds
             Region = region;
             X = x;
             Z = z;
-
-            FillYWithBlock(0, new Block(Material.OakPlanks));
         }
 
         internal Chunk(Region region, int x, int z, NbtLevel level)
