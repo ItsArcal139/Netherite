@@ -6,11 +6,11 @@ namespace Netherite.Blocks
 {
     public class Block
     {
-        public Material Material { get; set; }
+        public BlockState State { get; set; }
 
-        public Block(Material material)
+        public Block(BlockState state)
         {
-            Material = material;
+            State = state;
         }
     }
 }
