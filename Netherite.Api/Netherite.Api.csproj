@@ -6,7 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Blocks\" />
+    <Compile Remove="Blocks\**" />
+    <EmbeddedResource Remove="Blocks\**" />
+    <None Remove="Blocks\**" />
   </ItemGroup>
 
   <ItemGroup>
