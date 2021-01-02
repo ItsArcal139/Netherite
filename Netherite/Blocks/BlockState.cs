@@ -4,29 +4,43 @@ using Netherite.Nbt;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Netherite.Blocks
 {
     public struct BlockState
     {
-        public Identifier Id { get; set; }
+        public Material Material { get; set; }
 
         public Dictionary<string, string> Properties { get; set; }
 
-        public BlockState(Identifier id)
+        public BlockState(Identifier id, NbtCompound props = null)
         {
-            Id = id;
-            Properties = new Dictionary<string, string>();
-        }
-
-        public BlockState(Identifier id, NbtCompound props)
-        {
-            Id = id;
-            Properties = new Dictionary<string, string>();
-
-            foreach (var p in props)
+            var name = id.Key;
+            var result = "";
+            foreach (Match m in new Regex("([a-z0-9]*)").Matches(name))
             {
-                Properties.Add(p.Key, p.Value.ToValue());
+                if (m.Value.Length > 0)
+                {
+                    result += m.Value[0].ToString().ToUpper();
+                    result += m.Value[1..];
+                }
+            }
+
+            Material = (Material)Enum.Parse(typeof(Material), result);
+
+            Properties = new Dictionary<string, string>();
+
+            if (props != null)
+            {
+                foreach (var prop in props)
+                {
+                    if (!(prop.Value is NbtString ns))
+                    {
+                        throw new Exception("Not a NbtString");
+                    }
+                    Properties.Add(prop.Key, ns.Value);
+                }
             }
         }
 
@@ -36,21 +50,7 @@ namespace Netherite.Blocks
             string name = state.Name.Split(':')[1];
             var id = new Identifier(name, key);
 
-            var p = new Dictionary<string, string>();
-            foreach(var prop in state.Properties)
-            {
-                if(!(prop.Value is NbtString ns))
-                {
-                    throw new Exception("Not a NbtString");
-                }
-                p.Add(prop.Key, ns.Value);
-            }
-
-            return new BlockState
-            {
-                Id = id,
-                Properties = p
-            };
+            return new BlockState(id, state.Properties);
         }
     }
 }

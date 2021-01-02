@@ -20,7 +20,7 @@ namespace Netherite.Net
 
         public Server Server { get; set; }
 
-        internal NetworkManager(Server server, int port = 25565)
+        internal NetworkManager(Server server, int port)
         {
             Server = server;
             Port = port;

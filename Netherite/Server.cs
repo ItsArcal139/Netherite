@@ -6,20 +6,26 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Netherite.Worlds;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace Netherite
 {
     public class Server
     {
+        public Registry Registry { get; private set; }
+
         public NetworkManager NetworkManager { get; internal set; }
 
         public static Server Instance { get; private set; }
 
         public List<World> Worlds { get; private set; } = new List<World>();
 
-        public bool OnlineMode { get; set; } = false;
+        public bool OnlineMode => Config.OnlineMode;
 
-        public int Port { get; set; } = 25565;
+        public int Port => Config.Port;
+
+        public Config Config { get; set; }
 
         public Server()
         {
@@ -27,11 +33,21 @@ namespace Netherite
             {
                 throw new InvalidOperationException("Already created a server");
             }
+
             Instance = this;
+
+            Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+
+            Registry = new Registry();
 
             NetworkManager = new NetworkManager(this, Port);
 
-            Worlds.Add(new World());
+            Worlds.Add(new World("World"));
+
+            AppDomain.CurrentDomain.ProcessExit += (o, e) =>
+            {
+                this.Stop();
+            };
         }
 
         public List<Player> OnlinePlayers
@@ -64,6 +80,12 @@ namespace Netherite
         public void Start()
         {
             NetworkManager.StartLoop();
+        }
+
+        public void Stop()
+        {
+            string content = JsonConvert.SerializeObject(Config);
+            File.WriteAllText("config.json", content);
         }
     }
 }

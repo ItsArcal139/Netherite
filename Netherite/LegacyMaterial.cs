@@ -29,9 +29,9 @@ namespace Netherite
         public static readonly LegacyMaterial AcaciaPlanks = new LegacyMaterial(Material.AcaciaPlanks, 5, 4);
         public static readonly LegacyMaterial DarkOakPlanks = new LegacyMaterial(Material.DarkOakPlanks, 5, 5);
         public static readonly LegacyMaterial Bedrock = new LegacyMaterial(Material.Bedrock, 7, 0);
-        public static readonly LegacyMaterial FlowingWater = new LegacyMaterial(Material.Water, 8, 0);
+        // public static readonly LegacyMaterial FlowingWater = new LegacyMaterial(Material.Water, 8, 0);
         public static readonly LegacyMaterial Water = new LegacyMaterial(Material.Water, 9, 0);
-        public static readonly LegacyMaterial FlowingLava = new LegacyMaterial(Material.Lava, 10, 0);
+        // public static readonly LegacyMaterial FlowingLava = new LegacyMaterial(Material.Lava, 10, 0);
         public static readonly LegacyMaterial Lava = new LegacyMaterial(Material.Lava, 11, 0);
         public static readonly LegacyMaterial OakLog = new LegacyMaterial(Material.OakLog, 17);
         public static readonly LegacyMaterial SpruceLog = new LegacyMaterial(Material.SpruceLog, 17, 1);
@@ -65,7 +65,14 @@ namespace Netherite
             idMap.Add((id, data), this);
         }
 
-        public static LegacyMaterial FromMaterial(Material m) => map[m];
+        public static LegacyMaterial FromMaterial(Material m)
+        {
+            if (map.ContainsKey(m))
+            {
+                return map[m];
+            }
+            return LegacyMaterial.Stone;
+        }
 
         public static void EnsureLoad() { }
     }

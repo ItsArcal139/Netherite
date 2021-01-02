@@ -1,12 +1,77 @@
 ﻿using Netherite.Blocks;
 using Netherite.Data.Entities;
 using Netherite.Data.Nbt;
+using Netherite.Texts;
 using Netherite.Utils;
 using System;
 using System.Linq;
 
 namespace Netherite.Worlds
 {
+    internal class SectionDataReader
+    {
+        private long[] data;
+        private int bitPerBlock;
+
+        private int longIndex = 0;
+        private byte readBit = 0;
+
+        private int callCount = 0;
+
+        internal SectionDataReader(long[] data)
+        {
+            this.data = data;
+            bitPerBlock = data.Length / 64;
+        }
+
+        internal int RemainingBits()
+        {
+            return 64 - readBit;
+        }
+
+        internal byte NextBlock1_16()
+        {
+            callCount++;
+
+            byte result = 0;
+
+            for(int i=0; i<bitPerBlock; i++)
+            {
+                var n = (byte)((data[longIndex] >> (readBit++)) & 1);
+                result |= (byte)(n << i);
+            }
+
+            if(RemainingBits() < bitPerBlock)
+            {
+                longIndex++;
+                readBit = 0;
+            }
+
+            return result;
+        }
+
+        internal byte NextBlockPre1_16()
+        {
+            callCount++;
+
+            byte result = 0;
+
+            for (int i = 0; i < bitPerBlock; i++)
+            {
+                if (readBit >= 64)
+                {
+                    longIndex++;
+                    readBit = 0;
+                }
+
+                var n = (byte)((data[longIndex] >> (readBit++)) & 1);
+                result |= (byte)(n << i);
+            }
+
+            return result;
+        }
+    }
+
     public class ChunkSection
     {
         public Chunk Chunk { get; private set; }
@@ -29,10 +94,7 @@ namespace Netherite.Worlds
             ValidateYFlag(yFlag);
             YFlag = yFlag;
 
-            Array.Fill(Blocks, new Block(new BlockState
-            {
-                Id = new Identifier("air")
-            }));
+            Array.Fill(Blocks, new Block(new BlockState(new Identifier("air"))));
         }
 
         internal ChunkSection(Chunk chunk, NbtLevel.NbtSection section)
@@ -40,40 +102,45 @@ namespace Netherite.Worlds
             Chunk = chunk;
             YFlag = (short)(1 << section.Y);
 
-            long[] buf = section.BlockStates;
-
-            NibbleArray blocks = new NibbleArray(4096);
-
-            for (int i = 0; i < 256; i++)
+            if (section.BlockStates != null)
             {
-                long l = buf[i];
+                byte[] blocks = new byte[4096];
+                SectionDataReader reader = new SectionDataReader(section.BlockStates);
 
-                byte[] data = BitConverter.GetBytes(l);
-                if (BitConverter.IsLittleEndian)
+                for (int i = 0; i < 4096; i++)
                 {
-                    Array.Reverse(data);
+                    blocks[i] = chunk.DataVersion < 2566 ? reader.NextBlockPre1_16() : reader.NextBlock1_16();
                 }
 
-                for (int j = 0; j < 8; j++)
+                var palette = section.Palette;
+
+                for (int i = 0; i < 4096; i++)
                 {
-                    blocks.Data[i * 8 + j] = data[j];
+                    byte b = blocks[i];
+
+                    if (b < palette.Count)
+                    {
+                        NbtBlockState bs = palette[b];
+                        BlockState s = BlockState.FromNbt(bs);
+                        Blocks[i] = new Block(s);
+                    }
+                    else
+                    {
+                        Blocks[i] = new Block(new BlockState(new Identifier("air")));
+                    }
                 }
+
+                BlockLight = new NibbleArray(section.SkyLight);
             }
-
-            var palette = section.Palette;
-
-            for (int i = 0; i < 4096; i++)
+            else
             {
-                byte b = blocks[i];
-                NbtBlockState bs = palette[b];
+                Array.Fill(Blocks, new Block(new BlockState(new Identifier("air"))));
 
-                BlockState s = BlockState.FromNbt(bs);
-
-                Blocks[i] = new Block(s);
+                BlockLight = new NibbleArray(4096);
+                BlockLight.Fill(15);
             }
 
             SkyLight = new NibbleArray(section.SkyLight);
-            BlockLight = new NibbleArray(section.SkyLight);
         }
 
         private void ValidateYFlag(short flag)
@@ -105,7 +172,7 @@ namespace Netherite.Worlds
 
         private int ToOneDimensionIndex(int x, int y, int z) => (y * 16 + z) * 16 + x;
 
-        public int Count => Blocks.Sum(b => b.State.Id.Key == "air" ? 0 : 1);
+        public int Count => Blocks.Sum(b => b.State.Material == Material.Air ? 0 : 1);
 
         public bool IsEmpty => Count == 0;
     }

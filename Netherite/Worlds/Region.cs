@@ -10,6 +10,8 @@ namespace Netherite.Worlds
 {
     public class Region : IDisposable
     {
+        public int DataVersion { get; private set; }
+
         public int X { get; private set; }
 
         public int Z { get; private set; }
@@ -84,8 +86,10 @@ namespace Netherite.Worlds
             int i = 0;
             byte[] chunk = ZLibUtils.Decompress(buf);
             File.WriteAllBytes($"{fs.Name}-({chunkX},{chunkZ}).nbt", chunk);
-
+                
             NbtCompound c = (NbtCompound)NbtTag.Deserialize(chunk, ref i, true);
+            DataVersion = ((NbtInt)c["DataVersion"]).Value;
+
             var level = NbtConvert.Deserialize<NbtLevel>(c["Level"]);
 
             Chunk ck = new Chunk(this, chunkX, chunkZ, level);

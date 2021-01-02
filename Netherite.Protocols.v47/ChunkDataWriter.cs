@@ -39,7 +39,8 @@ namespace Netherite.Protocols.v47
                     for (int j = 0; j < 4096; j++)
                     {
                         Block b = section.Blocks[j];
-                        var legacy = LegacyMaterial.FromMaterial(b.Material);
+
+                        LegacyMaterial legacy = LegacyMaterial.FromMaterial(b.State.Material);
                         short id = legacy.Id;
                         byte data = legacy.Data;
 

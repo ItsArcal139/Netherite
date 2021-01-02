@@ -14,6 +14,8 @@ namespace Netherite.Entities
 {
     public class Player : Entity, ICommandSender
     {
+        public GameMode Mode { get; set; } = GameMode.Creative;
+
         public GameProfile Profile { get; set; }
 
         public PlayerConnection Client { get; set; }

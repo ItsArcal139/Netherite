@@ -1,4 +1,5 @@
-﻿using Netherite.Physics;
+﻿using Netherite.Nbt;
+using Netherite.Physics;
 using System;
 using System.Text;
 
@@ -214,5 +215,17 @@ namespace Netherite.Net.IO
                 Z = z
             };
         }
+
+        public Vector3 ReadLocation() => ReadLocation(out _);
+
+        public NbtTag ReadNbt(out int length)
+        {
+            int o = index;
+            var result = NbtTag.Deserialize(buffer, ref index, true);
+            length = index - o;
+            return result;
+        }
+
+        public NbtTag ReadNbt() => ReadNbt(out _);
     }
 }

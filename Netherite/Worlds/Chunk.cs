@@ -7,6 +7,8 @@ namespace Netherite.Worlds
 {
     public class Chunk : IChunk
     {
+        public int DataVersion => Region.DataVersion;
+
         public int X { get; private set; }
 
         public int Z { get; private set; }
@@ -31,6 +33,8 @@ namespace Netherite.Worlds
             foreach(var section in level.Sections)
             {
                 var y = section.Y;
+                if (y == 255) continue;
+
                 Sections[y] = new ChunkSection(this, section);
             }
         }

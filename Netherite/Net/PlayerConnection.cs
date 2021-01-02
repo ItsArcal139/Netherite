@@ -29,6 +29,7 @@ using System.Security.Cryptography;
 using System.Numerics;
 using Vector3 = Netherite.Physics.Vector3;
 using Netherite.Blocks;
+using System.IO;
 
 namespace Netherite.Net
 {
@@ -319,7 +320,7 @@ namespace Netherite.Net
             {
                 Player = Player,
                 IsHardcore = false,
-                Mode = GameMode.Adventure,
+                Mode = Player.Mode,
                 PreviousMode = null,
                 Worlds = new List<Identifier>
                 {
@@ -327,6 +328,7 @@ namespace Netherite.Net
                     new Identifier("the_nether"),
                     new Identifier("the_end")
                 },
+                Dimension = Player.World.Dimension,
                 WorldName = new Identifier("overworld"),
                 Seed = 0L,
                 MaxPlayers = 1,
@@ -371,10 +373,7 @@ namespace Netherite.Net
                     Y = 1,
                     Z = 0
                 },
-                State = new BlockState
-                {
-                    Id = new Identifier("grass_block")
-                }
+                State = new BlockState(new Identifier("grass_block"))
             });
 
             Player.Position = new Vector3(0.5, 3, 0.5);
@@ -458,7 +457,7 @@ namespace Netherite.Net
                             return new PlayerInfo.Meta
                             {
                                 Profile = pl.Profile,
-                                Mode = GameMode.Adventure,
+                                Mode = pl.Mode,
                                 Latency = 0
                             };
                         })
@@ -467,7 +466,7 @@ namespace Netherite.Net
                         new PlayerInfo.Meta
                         {
                             Profile = Player.Profile,
-                            Mode = GameMode.Adventure,
+                            Mode = Player.Mode,
                             Latency = 0
                         }
                     })
@@ -618,6 +617,11 @@ namespace Netherite.Net
             {
                 await Protocol.Write(packet, writer);
                 byte[] buffer = writer.ToBuffer();
+
+                if(packet is JoinGame)
+                {
+                    File.WriteAllBytes("dump.bin", buffer);
+                }
 
                 Logger.LogPacket(
                     TranslateText.Of("{0} {1} ")

@@ -359,9 +359,9 @@ namespace Netherite.Protocols.v47
             {
                 writer.WriteIntPos(p.Position);
 
-                LegacyMaterial m = LegacyMaterial.FromMaterial(p.Material);
+                LegacyMaterial lm = LegacyMaterial.FromMaterial(p.State.Material);
+                writer.WriteByte((byte)(lm.Id << 4 | lm.Data & 0xf));
 
-                writer.WriteByte((byte)(m.Id << 4 | m.Data & 0xf));
                 writer.Flush(0x23);
             });
 

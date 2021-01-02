@@ -41,7 +41,7 @@ namespace Netherite.Data.Nbt
         public class NbtSection
         {
             /// <summary>
-            /// 4096 個方塊狀態 Palette，被編碼成 256 個 long。
+            /// 4096 個方塊狀態 Palette，被編碼成複數的 long。
             /// </summary>
             public long[] BlockStates { get; set; }
 

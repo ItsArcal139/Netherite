@@ -48,7 +48,7 @@ namespace Netherite.Nbt.Serializations
             {
                 if (!first) result += (",");
                 first = false;
-                result += ($"{tag.Value}b");
+                result += ($"{n}b");
             }
 
             result += ($"]");
@@ -98,7 +98,7 @@ namespace Netherite.Nbt.Serializations
             {
                 if (!first) result += (",");
                 first = false;
-                result += ($"{tag.Value}");
+                result += ($"{n}");
             }
 
             result += ($"]");
@@ -136,7 +136,7 @@ namespace Netherite.Nbt.Serializations
             {
                 if (!first) result += (",");
                 first = false;
-                result += ($"{tag.Value}L");
+                result += ($"{n}L");
             }
 
             result += ($"]");

@@ -2,6 +2,7 @@
 using Netherite.Blocks;
 using Netherite.Data.Entities;
 using Netherite.Entities;
+using Netherite.Worlds.Dimensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,11 +12,15 @@ namespace Netherite.Worlds
 {
     public class World : IWorld
     {
+        public Dimension Dimension { get; set; } = Dimension.Overworld;
+
         public Identifier Name { get; set; }
 
         public long Seed { get; set; }
 
         private Dictionary<(int, int), Region> regions = new Dictionary<(int, int), Region>();
+
+        public string Path { get; set; }
 
         public Region GetRegion(int blockX, int blockZ)
         {
@@ -24,7 +29,7 @@ namespace Netherite.Worlds
 
             if (!regions.ContainsKey((rx, rz)))
             {
-                var r = Region.ReadFromFile($"World/region/r.{rx}.{rz}.mca", this, rx, rz);
+                var r = Region.ReadFromFile($"{Path}/region/r.{rx}.{rz}.mca", this, rx, rz);
                 regions.Add((rx, rz), r);
                 return r;
             } else
@@ -45,6 +50,12 @@ namespace Netherite.Worlds
             int cx = (int)Math.Floor((double)blockX / 16);
             int cz = (int)Math.Floor((double)blockZ / 16);
             return region.GetChunk(cx, cz);
+        }
+
+        public World(string path)
+        {
+            Path = path;
+            GetChunk(0, 0);
         }
 
         public Block GetBlock(int x, int y, int z) => GetChunkByBlockPos(x, z).GetBlock(x % 16, y, z % 16);

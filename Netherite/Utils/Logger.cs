@@ -8,12 +8,6 @@ namespace Netherite.Utils
 {
     public static class Logger
     {
-#if DEBUG_PACKET
-        public const bool DebugPacket = true;
-#else
-        public const bool DebugPacket = false;
-#endif
-
         private const string DefaultName = "Netherite";
 
         public static readonly TranslateText PrefixFormat = TranslateText.Of("{2} - {0} {1}");
@@ -42,16 +36,15 @@ namespace Netherite.Utils
 
         public static void LogPacket(string msg, string name = DefaultName)
         {
-#if DEBUG_PACKET
-            Log(LiteralText.Of(msg), TextColor.DarkGray, name);
-#endif
+            LogPacket(LiteralText.Of(msg), name);
         }
 
         public static void LogPacket(Text t, string name = DefaultName)
         {
-#if DEBUG_PACKET
-            Log(t, TextColor.DarkGray, name);
-#endif
+            if (Server.Instance.Config.DebugPacket)
+            {
+                Log(t, TextColor.DarkGray, name);
+            }
         }
 
         public static void Info(Text t, string name = DefaultName)

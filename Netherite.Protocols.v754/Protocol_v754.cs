@@ -1,5 +1,6 @@
 ﻿using Netherite.Auth.Properties;
 using Netherite.Data.Entities;
+using Netherite.Nbt;
 using Netherite.Nbt.Serializations;
 using Netherite.Net.IO;
 using Netherite.Net.Packets;
@@ -36,7 +37,7 @@ namespace Netherite.Protocols.v754
 
         public static void WriteChunkSection(this BufferWriter writer, ChunkSection section)
         {
-
+            
         }
     }
 
@@ -128,9 +129,14 @@ namespace Netherite.Protocols.v754
                 }
 
                 // dimension registry, type
-                File.WriteAllBytes("dimension.nbt", NbtConvert.SerializeToBuffer(ProtocolHelper.DimensionsTag));
-                writer.WriteNbt(ProtocolHelper.DimensionsTag);
-                writer.WriteIdentifier(p.WorldName);
+                var codec = Server.Instance.Registry.GetDimensionCodec();
+                writer.WriteNbt(codec);
+
+                File.WriteAllBytes("dimension_codec.nbt", NbtConvert.SerializeToBuffer(codec));
+
+                NbtCompound c = (NbtCompound)p.Dimension.GetCodec()["element"];
+                c.Name = "";
+                writer.WriteNbt(c);
 
                 // world name
                 writer.WriteIdentifier(p.WorldName);

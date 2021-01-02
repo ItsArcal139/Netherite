@@ -9,7 +9,11 @@
             Value = value;
         }
 
+        public NbtByte(bool flag) : this((byte)(flag ? 1 : 0)) { }
+
         public byte Value { get; set; }
+
+        public bool AsBool => Value != 0;
 
         public static NbtByte Deserialize(byte[] buffer, ref int index, bool named = false)
         {

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Netherite.Texts;
+using Netherite.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -18,8 +20,11 @@ namespace Netherite.Net.Protocols
         {
             await contextLock.WaitAsync();
 
+            Logger.Info(
+                LiteralText.Of("Loading protocols...")
+                ); ;
             try
-            {
+            {                   
                 foreach(Type t in protocols)
                 {
                     Protocol.Unregister(t);
@@ -28,7 +33,7 @@ namespace Netherite.Net.Protocols
 
                 context.Unload();
                 context = new AssemblyLoadContext(nameof(ProtocolLoader));
-
+                        
                 if (!Directory.Exists("Protocols"))
                 {
                     Directory.CreateDirectory("Protocols");

@@ -1,6 +1,7 @@
 ﻿using Netherite.Data.Entities;
 using Netherite.Entities;
 using Netherite.Worlds;
+using Netherite.Worlds.Dimensions;
 using System.Collections.Generic;
 
 namespace Netherite.Net.Packets.Play.Clientbound
@@ -16,6 +17,8 @@ namespace Netherite.Net.Packets.Play.Clientbound
         public GameMode? PreviousMode { get; set; } = null;
 
         public ICollection<Identifier> Worlds { get; set; }
+
+        public Dimension Dimension { get; set; }
 
         public Identifier WorldName { get; set; }
 
