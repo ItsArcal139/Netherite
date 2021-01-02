@@ -115,7 +115,7 @@ namespace Netherite.Net
                         .AddExtra(
                             TranslateText.Of("Received: \t{0} \t{1}").AddWith(
                                 LiteralText.Of(CurrentState.ToString() + ((byte)CurrentState > 0 ? "\t" : "")).SetColor(TextColor.Green),
-                                LiteralText.Of(p.GetType().Name).SetColor(TextColor.Gold)    
+                                LiteralText.Of(p.GetType().Name).SetColor(TextColor.Gold)
                             )
                         ));
 
@@ -236,7 +236,7 @@ namespace Netherite.Net
                     sharedKey = crypto.Decrypt(er.SharedSecret);
                     var decrypted = crypto.Decrypt(er.VerifyToken);
 
-                    if(!decrypted.SequenceEqual(randomToken))
+                    if (!decrypted.SequenceEqual(randomToken))
                     {
                         await DisconnectAsync("Invalid token!");
                         return;
@@ -502,7 +502,7 @@ namespace Netherite.Net
                     }
                     catch (Exception ex)
                     {
-                        foreach(string line in ex.ToString().Split('\n'))
+                        foreach (string line in ex.ToString().Split('\n'))
                         {
                             Logger.Error(LiteralText.Of(line));
                         }
@@ -604,6 +604,8 @@ namespace Netherite.Net
 
         private SemaphoreSlim writeLock = new SemaphoreSlim(1, 1);
 
+        private int cdc = 0;
+
         /// <summary>
         /// 將指定的封包 <see cref="Packet"/> 傳送給玩家。
         /// </summary>
@@ -618,9 +620,9 @@ namespace Netherite.Net
                 await Protocol.Write(packet, writer);
                 byte[] buffer = writer.ToBuffer();
 
-                if(packet is JoinGame)
+                if (packet is ChunkDataPacket)
                 {
-                    File.WriteAllBytes("dump.bin", buffer);
+                    File.WriteAllBytes("dump" + (cdc++) + ".bin", buffer);
                 }
 
                 Logger.LogPacket(

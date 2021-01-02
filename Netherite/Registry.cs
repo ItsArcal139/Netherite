@@ -15,12 +15,7 @@ namespace Netherite
             result.Name = "";
             result.Add("minecraft:dimension_type", Dimension.GetCodecs());
             result.Add("minecraft:worldgen/biome", Biome.GetCodecs());
-
-            byte[] b = File.ReadAllBytes("dimensions.nbt");
-            byte[] r = GZipUtils.Decompress(b);
-            File.WriteAllBytes("dimensions_d.nbt", r);
-            int index = 0;
-            return (NbtCompound)NbtTag.Deserialize(r, ref index, true);
+            return result;
         }
     }
 }

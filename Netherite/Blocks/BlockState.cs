@@ -1,6 +1,7 @@
 ﻿using Netherite.Data.Entities;
 using Netherite.Data.Nbt;
 using Netherite.Nbt;
+using Netherite.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,6 +52,41 @@ namespace Netherite.Blocks
             var id = new Identifier(name, key);
 
             return new BlockState(id, state.Properties);
+        }
+
+        internal ICollection<string> GetKeyOrder()
+        {
+            switch(Material)
+            {
+                case Material.NoteBlock:
+                    return new List<string>
+                    {
+                        "instrument", "note", "powered"
+                    };
+                case Material.Lever:
+                case Material.StoneButton:
+                    return new List<string>
+                    {
+                        "face", "facing", "powered"
+                    };
+            }
+            return Properties.Keys;
+        }
+
+        public override string ToString()
+        {
+            var name = "minecraft:" + Material.ToString().ToSnakeCase();
+            if (Properties == null || Properties.Count == 0) return name;
+            name += "[";
+
+            var props = "";
+            foreach(var key in GetKeyOrder())
+            {
+                props += "," + key + "=" + Properties[key];
+            }
+
+            name += props[1..] + "]";
+            return name;
         }
     }
 }

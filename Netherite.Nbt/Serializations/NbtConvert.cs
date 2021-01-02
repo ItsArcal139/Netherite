@@ -326,10 +326,15 @@ namespace Netherite.Nbt.Serializations
                 }
                 else
                 {
-
-                    if (dict.ContainsKey(prop.Name))
+                    var dictName = prop.Name;
+                    if(prop.GetCustomAttribute<NbtPropertyAttribute>() != null)
                     {
-                        var val = dict[prop.Name];
+                        var attr2 = prop.GetCustomAttribute<NbtPropertyAttribute>();
+                        dictName = attr2.Name;
+                    }
+                    if (dict.ContainsKey(dictName))
+                    {
+                        var val = dict[dictName];
 
                         if (val is Dictionary<string, object>)
                         {

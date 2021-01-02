@@ -65,12 +65,7 @@ namespace Netherite.Net.Protocols
                     throw new ArgumentException("state is unknown");
             }
 
-            try
-            {
-                Func<BufferReader, Packet> handler = map[id];
-                return handler(reader);
-            }
-            catch (KeyNotFoundException)
+            if(!map.ContainsKey(id))
             {
                 Logger.Warn(
                     TranslateText.Of("Incoming packet {0} in protocol {1} not registered")
@@ -78,19 +73,23 @@ namespace Netherite.Net.Protocols
                         .AddWith(Text.RepresentType(GetType())));
                 return new UnknownPacket(reader.Buffer);
             }
+
+            Func<BufferReader, Packet> handler = map[id];
+            return handler(reader);
         }
 
         public async Task Write(Packet packet, BufferWriter writer)
         {
-            try
+            Type t = packet.GetType();
+            if (outHandlers.ContainsKey(t))
             {
-                Action<Packet, BufferWriter> handler = outHandlers[packet.GetType()];
+                Action<Packet, BufferWriter> handler = outHandlers[t];
                 await Task.Run(() =>
                 {
                     handler(packet, writer);
                 });
             }
-            catch (KeyNotFoundException)
+            else
             {
                 Logger.Warn(
                     TranslateText.Of("Outgoing packet {0} in protocol {1} not registered")
@@ -102,14 +101,11 @@ namespace Netherite.Net.Protocols
 
         public static Protocol FromVersion(int version)
         {
-            try
-            {
-                return protocols[version];
-            }
-            catch (KeyNotFoundException)
+            if (!protocols.ContainsKey(version))
             {
                 throw new PlatformNotSupportedException($"Protocol version {version} not supported.");
             }
+            return protocols[version];
         }
 
         public static int LatestVersion

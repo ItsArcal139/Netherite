@@ -1,10 +1,19 @@
 ﻿using Netherite.Api.Worlds;
 using Netherite.Blocks;
 using Netherite.Data.Nbt;
+using Netherite.Worlds.Biomes;
 using System;
 
 namespace Netherite.Worlds
 {
+    public struct Heightmap
+    {
+        public long[] MotionBlocking { get; set; }
+        public long[] MotionBlockingNoLeaves { get; set; }
+        public long[] OceanFloor { get; set; }
+        public long[] WorldSurface { get; set; }
+    }
+
     public class Chunk : IChunk
     {
         public int DataVersion => Region.DataVersion;
@@ -13,9 +22,13 @@ namespace Netherite.Worlds
 
         public int Z { get; private set; }
 
+        public Heightmap Heightmap { get; private set; }
+
         public IWorld World => Region.World;
 
         public Region Region { get; private set; }
+
+        public Biome[] Biomes { get; private set; }
 
         internal Chunk(Region region, int x, int z)
         {
@@ -36,6 +49,20 @@ namespace Netherite.Worlds
                 if (y == 255) continue;
 
                 Sections[y] = new ChunkSection(this, section);
+            }
+
+            Heightmap = new Heightmap
+            {
+                MotionBlocking = level.Heightmaps.MotionBlocking,
+                MotionBlockingNoLeaves = level.Heightmaps.MotionBlockingNoLeaves,
+                OceanFloor = level.Heightmaps.OceanFloor,
+                WorldSurface = level.Heightmaps.WorldSurface
+            };
+
+            Biomes = new Biome[level.Biomes.Length];
+            for(int i=0; i<level.Biomes.Length; i++)
+            {
+                Biomes[i] = Biome.GetBiome(level.Biomes[i]);
             }
         }
 
@@ -76,14 +103,11 @@ namespace Netherite.Worlds
             return Sections[index];
         }
 
-        public Biome GetBiome(int x, int z)
+        public Biome GetBiome(int x, int y, int z)
         {
-            return new Biome { Id = 127 };
+            // Index formula from https://wiki.vg/Chunk_Format#Biomes
+            int index = ((y >> 2) & 63) << 4 | ((z >> 2) & 3) << 2 | ((x >> 2) & 3);
+            return Biomes[index];
         }
-    }
-
-    public class Biome
-    {
-        public byte Id { get; set; }
     }
 }

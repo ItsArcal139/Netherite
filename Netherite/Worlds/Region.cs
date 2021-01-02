@@ -62,12 +62,12 @@ namespace Netherite.Worlds
                 return map[(chunkX, chunkZ)];
             }
 
-            var (offset, size) = GetChunkOffsetAndSize(chunkX, chunkZ);
+            // Don't know how to use the 2nd parameter...
+            var (offset, _) = GetChunkOffsetAndSize(chunkX, chunkZ);
 
             byte[] a = new byte[4];
             fs.Seek(offset, SeekOrigin.Begin);
             fs.Read(a, 0, 4);
-            int b = fs.ReadByte();
 
             if (BitConverter.IsLittleEndian)
             {
@@ -75,18 +75,23 @@ namespace Netherite.Worlds
             }
 
             int length = BitConverter.ToInt32(a);
-            if (b == 1)
-            {
-                throw new NotSupportedException("Gzip is not supported");
-            }
+            int compressMode = fs.ReadByte();
 
+            // Read compressed data.
             byte[] buf = new byte[length];
             fs.Read(buf, 0, length);
 
+            // Decompress the data.
+            byte[] chunk;
+            if (compressMode == 1)
+            {
+                chunk = GZipUtils.Decompress(buf);
+            } else
+            {
+                chunk = ZLibUtils.Decompress(buf);
+            }
+
             int i = 0;
-            byte[] chunk = ZLibUtils.Decompress(buf);
-            File.WriteAllBytes($"{fs.Name}-({chunkX},{chunkZ}).nbt", chunk);
-                
             NbtCompound c = (NbtCompound)NbtTag.Deserialize(chunk, ref i, true);
             DataVersion = ((NbtInt)c["DataVersion"]).Value;
 

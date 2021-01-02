@@ -84,7 +84,6 @@ namespace Netherite.Nbt
             while (buffer[index] != 0)
             {
                 NbtTag tag = NbtTag.Deserialize(buffer, ref index, true);
-                Console.WriteLine($"Parsed tag {tag.Name}");
                 result.Add(tag.Name, tag);
             }
             index++;

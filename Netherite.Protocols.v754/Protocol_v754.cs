@@ -2,12 +2,11 @@
 using Netherite.Data.Entities;
 using Netherite.Nbt;
 using Netherite.Nbt.Serializations;
-using Netherite.Net.IO;
 using Netherite.Net.Packets;
 using Netherite.Net.Packets.Login.Clientbound;
+using Netherite.Net.Packets.Play;
 using Netherite.Net.Packets.Play.Clientbound;
 using Netherite.Net.Protocols;
-using Netherite.Worlds;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,31 +14,6 @@ using System.IO;
 
 namespace Netherite.Protocols.v754
 {
-    public static class BufferWriterExtension
-    {
-        public static void WriteChunk(this BufferWriter writer, Chunk chunk)
-        {
-            writer.WriteInt(chunk.X);
-            writer.WriteInt(chunk.Z);
-            writer.WriteBool(true);
-
-            int mask = 0;
-            BufferWriter col = new BufferWriter();
-            for(int sectionY = 0; sectionY < (256 / 16); sectionY++)
-            {
-                if(!chunk.IsSectionEmpty(sectionY))
-                {
-                    mask |= (1 << sectionY);
-                    writer.WriteChunkSection(chunk.Sections[sectionY]);
-                }
-            }
-        }
-
-        public static void WriteChunkSection(this BufferWriter writer, ChunkSection section)
-        {
-            
-        }
-    }
 
     public class Protocol_v754 : Protocol
     {
@@ -57,6 +31,8 @@ namespace Netherite.Protocols.v754
             RegisterDefaults();
 
             #region ------ Incoming packets ------
+
+            RegisterIncoming(PacketState.Play, 0x10, reader => new KeepAlivePacket(reader.ReadLong()));
 
             #endregion
 
@@ -106,6 +82,18 @@ namespace Netherite.Protocols.v754
             {
                 writer.WriteChat(p.Reason);
                 writer.Flush(0x19);
+            });
+
+            RegisterOutgoing<KeepAlivePacket>((p, writer) =>
+            {
+                writer.WriteLong(p.Payload);
+                writer.Flush(0x1f);
+            });
+
+            RegisterOutgoing<ChunkDataPacket>((p, writer) =>
+            {
+                writer.WriteChunk(p.Chunk);
+                writer.Flush(0x20);
             });
 
             RegisterOutgoing<JoinGame>((p, writer) =>
@@ -201,6 +189,18 @@ namespace Netherite.Protocols.v754
                 }
 
                 writer.Flush(0x32);
+            });
+
+            RegisterOutgoing<PlayerPositionAndLook>((p, writer) =>
+            {
+                writer.WriteDouble(p.X);
+                writer.WriteDouble(p.Y);
+                writer.WriteDouble(p.Z);
+                writer.WriteFloat(p.Yaw);
+                writer.WriteFloat(p.Pitch);
+                writer.WriteByte(p.RelationFlags);
+                writer.WriteVarInt(p.TeleportId);
+                writer.Flush(0x34);
             });
 
             #endregion

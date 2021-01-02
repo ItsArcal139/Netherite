@@ -78,6 +78,8 @@ namespace Netherite.Worlds
 
         public short YFlag { get; private set; }
 
+        public byte BitsPerBlock { get; private set; }
+
         public byte StartY => (byte)(Math.Log2(YFlag) * 16);
 
         public Range YRange => StartY..(StartY + 15);
@@ -106,6 +108,7 @@ namespace Netherite.Worlds
             {
                 byte[] blocks = new byte[4096];
                 SectionDataReader reader = new SectionDataReader(section.BlockStates);
+                BitsPerBlock = (byte)(section.BlockStates.Length / 64);
 
                 for (int i = 0; i < 4096; i++)
                 {

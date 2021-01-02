@@ -15,5 +15,7 @@ namespace Netherite.Net.Packets.Play.Clientbound
         public float Pitch { get; set; }
 
         public byte RelationFlags { get; set; }
+
+        public int TeleportId { get; set; }
     }
 }

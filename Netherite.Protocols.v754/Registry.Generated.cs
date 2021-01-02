@@ -10,12 +10,13 @@ namespace Netherite.Protocols.v754
 
     public partial class Registry
     {
-        public static readonly Identifier[] Blocks = new Identifier[BlockCount];
-        public static readonly MatchTarget[] StateToMatch = new MatchTarget[StateCount];
-        public static readonly short[] NumericToBase = new short[BlockCount];
+        public static readonly Identifier[] Blocks = new Identifier[StateCount];
+        public static readonly MatchTarget[] StateToMatch = new MatchTarget[BlockCount];
+        public static readonly short[] NumericToBase = new short[StateCount];
 
         static Registry()
         {
+            IdStateMapping();
 
             // Material: Air => Base state ID: 0
             NumericToBase[0] = 0;

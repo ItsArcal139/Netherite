@@ -22,16 +22,16 @@ namespace Netherite.Data.Nbt
         public class HeightMapList
         {
             [NbtProperty("MOTION_BLOCKING")]
-            public int[] MotionBlocking { get; set; }
+            public long[] MotionBlocking { get; set; }
 
             [NbtProperty("MOTION_BLOCKING_NO_LEAVES")]
-            public int[] MotionBlocingNoLeaves { get; set; }
+            public long[] MotionBlockingNoLeaves { get; set; }
 
             [NbtProperty("OCEAN_FLOOR")]
-            public int[] OceanFloor { get; set; }
+            public long[] OceanFloor { get; set; }
 
             [NbtProperty("WORLD_SURFACE")]
-            public int[] WorldSurface { get; set; }
+            public long[] WorldSurface { get; set; }
         }
 
         public HeightMapList Heightmaps { get; set; }
