@@ -30,11 +30,14 @@ namespace Netherite.Worlds
 
         public Biome[] Biomes { get; private set; }
 
+        public ChunkSection[] Sections { get; private set; }
+
         internal Chunk(Region region, int x, int z)
         {
             Region = region;
             X = x;
             Z = z;
+            Sections = new ChunkSection[0];
         }
 
         internal Chunk(Region region, int x, int z, NbtLevel level)
@@ -42,6 +45,8 @@ namespace Netherite.Worlds
             Region = region;
             X = x;
             Z = z;
+
+            Sections = new ChunkSection[level.Sections.Count - 1];
 
             foreach(var section in level.Sections)
             {
@@ -66,10 +71,9 @@ namespace Netherite.Worlds
             }
         }
 
-        public ChunkSection[] Sections { get; set; } = new ChunkSection[16];
-
         public bool IsSectionEmpty(int index)
         {
+            if (index >= Sections.Length) return true;
             ChunkSection s = Sections[index];
             if (s == null) return true;
 
@@ -82,13 +86,13 @@ namespace Netherite.Worlds
             return GetChunkSectionByPosY(y).GetBlock(x, sy, z);
         }
 
-        public void SetBlock(int x, int y, int z, Block b)
+        public void SetBlock(int x, int y, int z, BlockState b)
         {
             int sy = y % 16;
             GetChunkSectionByPosY(y).SetBlock(x, sy, z, b);
         }
 
-        public void FillYWithBlock(int y, Block b) => GetChunkSectionByPosY(y).FillYWithBlock(y % 16, b);
+        public void FillYWithBlock(int y, BlockState b) => GetChunkSectionByPosY(y).FillYWithBlock(y % 16, b);
 
         public ChunkSection GetChunkSectionByPosY(int y)
         {
@@ -103,11 +107,14 @@ namespace Netherite.Worlds
             return Sections[index];
         }
 
-        public Biome GetBiome(int x, int y, int z)
+        public Biome GetBiome(int chunkX, int chunkY, int chunkZ)
         {
             // Index formula from https://wiki.vg/Chunk_Format#Biomes
-            int index = ((y >> 2) & 63) << 4 | ((z >> 2) & 3) << 2 | ((x >> 2) & 3);
+            int index = ((chunkY >> 2) & 63) << 4 | ((chunkZ >> 2) & 3) << 2 | ((chunkX >> 2) & 3);
             return Biomes[index];
         }
+
+        [Obsolete]
+        public Biome GetBiome(int chunkX, int chunkZ) => GetBiome(chunkX, 0, chunkZ);
     }
 }

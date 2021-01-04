@@ -21,7 +21,7 @@ namespace Netherite.Generator
         public static void GenerateBlockStates()
         {
             string content = @"
-namespace Netherite.Protocol.v754
+namespace Netherite.Protocols.v754
 {
     public partial class Registry
     {

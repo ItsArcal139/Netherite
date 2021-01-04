@@ -122,5 +122,79 @@ namespace Netherite.Entities
         {
 
         }
+
+        public List<Chunk> LoadedChunks { get; } = new List<Chunk>();
+
+        private Chunk lastChunk = null;
+
+        private bool sentLook = false;
+
+        public override void Tick()
+        {
+            List<Chunk> nearby = new List<Chunk>();
+            Chunk center = World.GetChunkByBlockPos((int)Position.X, (int)Position.Z);
+
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    nearby.Add(World.GetChunk(center.X - i, center.Z - j));
+                    nearby.Add(World.GetChunk(center.X + i, center.Z + j));
+                }
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    nearby.Add(World.GetChunk(center.X - i, center.Z + j));
+                    nearby.Add(World.GetChunk(center.X + i, center.Z - j));
+                }
+            }
+
+            if(lastChunk == null)
+            {
+                lastChunk = center;
+            } else
+            {
+                if(lastChunk != center)
+                {
+                    _ = Client.SendPacketAsync(new ViewPosition
+                    {
+                        ChunkX = center.X,
+                        ChunkZ = center.Z
+                    });
+                    lastChunk = center;
+                }
+            }
+
+            foreach (var chunk in nearby)
+            {
+                if (!LoadedChunks.Contains(chunk))
+                {
+                    _ = LoadChunkAsync(chunk);
+                    LoadedChunks.Add(chunk);
+                }
+            }
+
+            if(!sentLook)
+            {
+                _ = Client.SendPacketAsync(new PlayerPositionAndLook
+                {
+                    X = Position.X,
+                    Y = Position.Y,
+                    Z = Position.Z
+                });
+                sentLook = true;
+            }
+        }
+
+        public async Task LoadChunkAsync(Chunk chunk)
+        {
+            await Client.SendPacketAsync(new ChunkDataPacket
+            {
+                Chunk = chunk
+            });
+        }
     }
 }

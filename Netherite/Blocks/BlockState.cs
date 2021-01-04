@@ -28,7 +28,13 @@ namespace Netherite.Blocks
                 }
             }
 
-            Material = (Material)Enum.Parse(typeof(Material), result);
+            object mat;
+            if (!Enum.TryParse(typeof(Material), result, out mat))
+            {
+                Material = Material.Stone;
+            } else {
+                Material = (Material)mat;
+            }
 
             Properties = new Dictionary<string, string>();
 
@@ -58,6 +64,11 @@ namespace Netherite.Blocks
         {
             switch(Material)
             {
+                case Material.Ladder:
+                    return new List<string>
+                    {
+                        "facing", "waterlogged"
+                    };
                 case Material.NoteBlock:
                     return new List<string>
                     {
@@ -68,6 +79,11 @@ namespace Netherite.Blocks
                     return new List<string>
                     {
                         "face", "facing", "powered"
+                    };
+                case Material.RedstoneWire:
+                    return new List<string>
+                    {
+                        "east", "north", "power", "south", "west"
                     };
             }
             return Properties.Keys;

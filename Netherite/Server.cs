@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Netherite.Worlds;
 using Newtonsoft.Json;
 using System.IO;
+using System.Threading;
 
 namespace Netherite
 {
@@ -22,6 +23,8 @@ namespace Netherite
         public List<World> Worlds { get; private set; } = new List<World>();
 
         public bool OnlineMode => Config.OnlineMode;
+
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         public int Port => Config.Port;
 
@@ -55,7 +58,7 @@ namespace Netherite
             get
             {
                 var connections = NetworkManager.Connections.ToList();
-                connections.RemoveAll(c => !c.Connected);
+                connections.RemoveAll(c => !c.Connected || !c.ReadyForTick);
 
                 var result = connections.ConvertAll(a => a.Player);
                 result.RemoveAll(a => a == null);
@@ -79,11 +82,34 @@ namespace Netherite
 
         public void Start()
         {
+            Task.Run(async () =>
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    Tick();
+                    await Task.Delay(50);
+                }
+            });
+
             NetworkManager.StartLoop();
+        }
+
+        public void Tick()
+        {
+            foreach(var world in Worlds)
+            {
+                world.Tick();
+            }
+
+            foreach(var player in OnlinePlayers)
+            {
+                player.Tick();
+            }
         }
 
         public void Stop()
         {
+            cts.Cancel();
             string content = JsonConvert.SerializeObject(Config);
             File.WriteAllText("config.json", content);
         }

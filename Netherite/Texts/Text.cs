@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Netherite.Texts
 {
@@ -17,7 +18,7 @@ namespace Netherite.Texts
         {
             JsonProperty p = base.CreateProperty(member, memberSerialization);
 
-            if(p.DeclaringType == typeof(ICollection<Text>) && p.PropertyName == "extra")
+            if (p.DeclaringType == typeof(ICollection<Text>) && p.PropertyName == "extra")
             {
                 p.ShouldSerialize = i =>
                 {
@@ -231,6 +232,24 @@ namespace Netherite.Texts
             return result;
         }
 
+        private string Format(string fmt, params object[] obj)
+        {
+            var offset = -1;
+            var counter = 0;
+            var matches = new Regex("%(?:(?:(\\d*?)\\$)?)s").Matches(fmt);
+            foreach (Match m in matches)
+            {
+                var c = m.Groups[1].Value;
+                if (c.Length == 0)
+                {
+                    c = (counter++) + "";
+                }
+                offset += c.Length + 2 - m.Value.Length;
+                fmt = fmt[..(m.Index + offset)] + "{" + c + "}" + fmt[(m.Index + offset + m.Value.Length)..];
+            }
+            return string.Format(fmt, obj);
+        }
+
         internal override string ToAscii()
         {
             string extra = base.ToAscii();
@@ -239,7 +258,7 @@ namespace Netherite.Texts
             {
                 return text.ToAscii() + color;
             }).ToArray();
-            return color + string.Format(Translate, withAscii) + extra;
+            return color + Format(Translate, withAscii) + extra;
         }
 
         public override string ToPlainText()
@@ -265,7 +284,7 @@ namespace Netherite.Texts
                 return text.ToPlainText();
             }).ToArray();
 
-            return string.Format(result, withAscii) + extra;
+            return Format(result, withAscii) + extra;
         }
     }
 
@@ -282,22 +301,22 @@ namespace Netherite.Texts
 
         private static Dictionary<char, AsciiColor> byCode = new Dictionary<char, AsciiColor>();
 
-        public static readonly AsciiColor Black      = new AsciiColor('0', 30);
-        public static readonly AsciiColor DarkBlue   = new AsciiColor('1', 30, true);
-        public static readonly AsciiColor DarkGreen  = new AsciiColor('2', 30, true);
-        public static readonly AsciiColor DarkAqua   = new AsciiColor('3', 30, true);
-        public static readonly AsciiColor DarkRed    = new AsciiColor('4', 30, true);
+        public static readonly AsciiColor Black = new AsciiColor('0', 30);
+        public static readonly AsciiColor DarkBlue = new AsciiColor('1', 30, true);
+        public static readonly AsciiColor DarkGreen = new AsciiColor('2', 30, true);
+        public static readonly AsciiColor DarkAqua = new AsciiColor('3', 30, true);
+        public static readonly AsciiColor DarkRed = new AsciiColor('4', 30, true);
         public static readonly AsciiColor DarkPurple = new AsciiColor('5', 30, true);
-        public static readonly AsciiColor Gold       = new AsciiColor('6', 33);
-        public static readonly AsciiColor Gray       = new AsciiColor('7', 37);
-        public static readonly AsciiColor DarkGray   = new AsciiColor('8', 30, true);
-        public static readonly AsciiColor Blue       = new AsciiColor('9', 30, true);
-        public static readonly AsciiColor Green      = new AsciiColor('a', 32, true);
-        public static readonly AsciiColor Aqua       = new AsciiColor('b', 34, true);
-        public static readonly AsciiColor Red        = new AsciiColor('c', 31, true);
-        public static readonly AsciiColor Purple     = new AsciiColor('d', 31, true);
-        public static readonly AsciiColor Yellow     = new AsciiColor('e', 33, true);
-        public static readonly AsciiColor White      = new AsciiColor('f', 37, true);
+        public static readonly AsciiColor Gold = new AsciiColor('6', 33);
+        public static readonly AsciiColor Gray = new AsciiColor('7', 37);
+        public static readonly AsciiColor DarkGray = new AsciiColor('8', 30, true);
+        public static readonly AsciiColor Blue = new AsciiColor('9', 30, true);
+        public static readonly AsciiColor Green = new AsciiColor('a', 32, true);
+        public static readonly AsciiColor Aqua = new AsciiColor('b', 34, true);
+        public static readonly AsciiColor Red = new AsciiColor('c', 31, true);
+        public static readonly AsciiColor Purple = new AsciiColor('d', 31, true);
+        public static readonly AsciiColor Yellow = new AsciiColor('e', 33, true);
+        public static readonly AsciiColor White = new AsciiColor('f', 37, true);
 
         public const char ColorChar = '\u00a7';
 
@@ -315,7 +334,8 @@ namespace Netherite.Texts
             try
             {
                 return byCode[c];
-            } catch(KeyNotFoundException)
+            }
+            catch (KeyNotFoundException)
             {
                 throw new ArgumentException($"Color of '{c}' is not defined");
             }

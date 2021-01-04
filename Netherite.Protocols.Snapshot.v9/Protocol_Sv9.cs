@@ -1,8 +1,6 @@
 ﻿using Netherite.Auth.Properties;
 using Netherite.Data.Entities;
-using Netherite.Entities;
 using Netherite.Nbt;
-using Netherite.Nbt.Serializations;
 using Netherite.Net.Packets;
 using Netherite.Net.Packets.Login.Clientbound;
 using Netherite.Net.Packets.Play;
@@ -11,31 +9,27 @@ using Netherite.Net.Packets.Play.Serverbound;
 using Netherite.Net.Protocols;
 using Netherite.Texts;
 using Netherite.Utils;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
-namespace Netherite.Protocols.v754
+namespace Netherite.Protocols.Snapshot.v9
 {
-
-    public class Protocol_v754 : Protocol
+    public class Protocol_Sv9 : Protocol
     {
-        public override int Version => 754;
+        public override int Version => 0x40000009;
 
-        public override string VersionName => "1.16.4";
+        public override string VersionName => "20w51a";
 
-        static Protocol_v754()
+        static Protocol_Sv9()
         {
-            Register(754, new Protocol_v754());
-
+            Register(0x40000009, new Protocol_Sv9());
             Logger.Info(
-                LiteralText.Of("Loading block states for protocol 754...")
-                );
+                 LiteralText.Of("Loading block states for 20w51a...")
+                 );
             Registry.EnsureLoad();
         }
 
-        internal Protocol_v754()
+        internal Protocol_Sv9()
         {
             RegisterDefaults();
 
@@ -114,7 +108,6 @@ namespace Netherite.Protocols.v754
                     OnGround = reader.ReadBool()
                 };
             });
-
             #endregion
 
             #region ------ Outgoing packets ------
@@ -134,33 +127,21 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x02);
             });
 
-            RegisterOutgoing<SpawnEntity>((p, writer) =>
+            RegisterOutgoing<SculkVibrationSignal>((p, writer) =>
             {
-                writer.WriteVarInt(p.Entity.Handle);
-                writer.WriteGuid(p.Entity.Guid);
-                writer.WriteVarInt(0); // Entity type
-                writer.WriteDouble(p.Entity.Position.X);
-                writer.WriteDouble(p.Entity.Position.Y);
-                writer.WriteDouble(p.Entity.Position.Z);
-                writer.WriteAngle(p.Entity.Pitch);
-                writer.WriteAngle(p.Entity.Yaw);
-                writer.WriteInt(0);   // Data
-                writer.WriteShort(0); // Velocity X
-                writer.WriteShort(0); // Velocity Y
-                writer.WriteShort(0); // Velocity Z
-                writer.Flush(0x00);
-            });
+                writer.WriteLongPos(p.Source);
+                writer.WriteIdentifier(p.DestinationType);
 
-            RegisterOutgoing<SpawnPlayer>((p, writer) =>
-            {
-                writer.WriteVarInt(p.Player.Handle);
-                writer.WriteGuid(p.Player.Guid);
-                writer.WriteDouble(p.Player.Position.X);
-                writer.WriteDouble(p.Player.Position.Y);
-                writer.WriteDouble(p.Player.Position.Z);
-                writer.WriteFloat(p.Player.Yaw);
-                writer.WriteFloat(p.Player.Pitch);
-                writer.Flush(0x04);
+                if (p.DestinationType.Key == "block")
+                {
+                    writer.WriteLongPos(p.TargetPosition);
+                }
+                else if (p.DestinationType.Key == "entity")
+                {
+                    writer.WriteVarInt(p.TargetEntity.Handle);
+                }
+
+                writer.Flush(0x05);
             });
 
             RegisterOutgoing<ChatPacket>((p, writer) =>
@@ -168,7 +149,7 @@ namespace Netherite.Protocols.v754
                 writer.WriteChat(p.Message);
                 writer.WriteByte((byte)p.Position);
                 writer.WriteGuid(p.SenderGuid);
-                writer.Flush(0x0e);
+                writer.Flush(0x0f);
             });
 
             RegisterOutgoing<PluginMessage>((p, writer) =>
@@ -180,32 +161,32 @@ namespace Netherite.Protocols.v754
                     writer.WriteByte(b);
                 }
 
-                writer.Flush(0x17);
+                writer.Flush(0x18);
             });
 
             RegisterOutgoing<ServerBrand>((p, writer) =>
             {
                 writer.WriteIdentifier(new Identifier("brand"));
                 writer.WriteString(p.Name);
-                writer.Flush(0x17);
+                writer.Flush(0x18);
             });
 
             RegisterOutgoing<Kick>((p, writer) =>
             {
                 writer.WriteChat(p.Reason);
-                writer.Flush(0x19);
+                writer.Flush(0x1a);
             });
 
             RegisterOutgoing<KeepAlivePacket>((p, writer) =>
             {
                 writer.WriteLong(p.Payload);
-                writer.Flush(0x1f);
+                writer.Flush(0x20);
             });
 
             RegisterOutgoing<ChunkDataPacket>((p, writer) =>
             {
                 writer.WriteChunk(p.Chunk);
-                writer.Flush(0x20);
+                writer.Flush(0x21);
             });
 
             RegisterOutgoing<JoinGame>((p, writer) =>
@@ -247,7 +228,7 @@ namespace Netherite.Protocols.v754
                 writer.WriteBool(p.IsDebugWorld);
                 writer.WriteBool(p.IsFlatWorld);
 
-                writer.Flush(0x24);
+                writer.Flush(0x25);
             });
 
             RegisterOutgoing<PlayerInfo>((p, writer) =>
@@ -298,7 +279,7 @@ namespace Netherite.Protocols.v754
                     }
                 }
 
-                writer.Flush(0x32);
+                writer.Flush(0x33);
             });
 
             RegisterOutgoing<PlayerPositionAndLook>((p, writer) =>
@@ -310,14 +291,14 @@ namespace Netherite.Protocols.v754
                 writer.WriteFloat(p.Pitch);
                 writer.WriteByte(p.RelationFlags);
                 writer.WriteVarInt(p.TeleportId);
-                writer.Flush(0x34);
+                writer.Flush(0x35);
             });
 
             RegisterOutgoing<ViewPosition>((p, writer) =>
             {
                 writer.WriteVarInt(p.ChunkX);
                 writer.WriteVarInt(p.ChunkZ);
-                writer.Flush(0x40);
+                writer.Flush(0x41);
             });
 
             #endregion

@@ -22,28 +22,6 @@ namespace Netherite.Net.Packets.Play
                         Animation = 0
                     });
                 }
-
-                Random r = new Random();
-                int eid = r.Next();
-
-                await p.Client.SendPacketAsync(new SpawnPlayer
-                {
-                    Pitch = player.Pitch,
-                    Yaw = player.Yaw,
-                    CurrentItem = 5,
-                    EntityID = eid,
-                    Guid = player.Guid,
-                    X = player.Position.X,
-                    Y = player.Position.Y,
-                    Z = player.Position.Z,
-                    Metadata = player.Metadata
-                });
-
-                await p.Client.SendPacketAsync(new EntityHeadLook
-                {
-                    Entity = new DummyEntity(eid),
-                    Yaw = player.Yaw
-                });
             }
         }
     }

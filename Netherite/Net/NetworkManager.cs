@@ -31,10 +31,19 @@ namespace Netherite.Net
             socket.Listen(0);
 
             Protocol.EnsureLoad();
-            ProtocolLoader.LoadDLLs();
+            _ = ProtocolLoader.LoadProtocolsAsync();
+        }
+        
+        public void Stop()
+        {
+            StopAccepting();
+            foreach(var p in Server.OnlinePlayers)
+            {
+                p.Client.DisconnectAsync("Server stopping");
+            }
         }
 
-        public void StopAccepting()
+        private void StopAccepting()
         {
             cts.Cancel();
         }

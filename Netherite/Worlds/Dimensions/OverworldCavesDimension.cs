@@ -18,6 +18,10 @@ namespace Netherite.Worlds.Dimensions
         public override bool Ultrawarm => false;
         public override bool HasCeiling => true;
 
+        // 1.17
+        public override int Height => 256;
+        public override int MinY => 0;
+
         internal OverworldCavesDimension() : base(new Identifier("overworld_caves")) { }
     }
 }

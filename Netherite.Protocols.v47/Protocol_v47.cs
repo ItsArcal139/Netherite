@@ -258,18 +258,17 @@ namespace Netherite.Protocols.v47
 
             RegisterOutgoing<SpawnPlayer>((p, writer) =>
             {
-                writer.WriteVarInt(p.EntityID);
-                writer.WriteGuid(p.Guid);
-                writer.WriteFixedPointI(p.X);
-                writer.WriteFixedPointI(p.Y);
-                writer.WriteFixedPointI(p.Z);
-                writer.WriteAngle(p.Yaw);
-                writer.WriteAngle(p.Pitch);
+                writer.WriteVarInt(p.Player.Handle);
+                writer.WriteGuid(p.Player.Guid);
+                writer.WriteFixedPointI(p.Player.Position.X);
+                writer.WriteFixedPointI(p.Player.Position.Y);
+                writer.WriteFixedPointI(p.Player.Position.Z);
+                writer.WriteAngle(p.Player.Yaw);
+                writer.WriteAngle(p.Player.Pitch);
                 writer.WriteShort(p.CurrentItem);
-
                 PlayerMetadataWriter mw = new PlayerMetadataWriter(p.Metadata, writer);
                 mw.Write();
-                writer.WriteByte(127);
+                writer.WriteByte(127); // metadata end
 
                 writer.Flush(0x0c);
             });
@@ -357,7 +356,7 @@ namespace Netherite.Protocols.v47
 
             RegisterOutgoing<BlockChange>((p, writer) =>
             {
-                writer.WriteIntPos(p.Position);
+                writer.WriteLongPos(p.Position);
 
                 LegacyMaterial lm = LegacyMaterial.FromMaterial(p.State.Material);
                 writer.WriteByte((byte)(lm.Id << 4 | lm.Data & 0xf));

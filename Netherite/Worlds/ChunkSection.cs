@@ -4,6 +4,7 @@ using Netherite.Data.Nbt;
 using Netherite.Texts;
 using Netherite.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Netherite.Worlds
@@ -84,7 +85,9 @@ namespace Netherite.Worlds
 
         public Range YRange => StartY..(StartY + 15);
 
-        public Block[] Blocks { get; private set; } = new Block[4096];
+        public int[] BlockIndices { get; private set; } = new int[4096];
+
+        public List<BlockState> Palette { get; set; } = new List<BlockState>();
 
         public NibbleArray SkyLight { get; internal set; }
 
@@ -96,7 +99,8 @@ namespace Netherite.Worlds
             ValidateYFlag(yFlag);
             YFlag = yFlag;
 
-            Array.Fill(Blocks, new Block(new BlockState(new Identifier("air"))));
+            Palette.Add(new BlockState(new Identifier("air")));
+            Array.Fill(BlockIndices, (byte)0);
         }
 
         internal ChunkSection(Chunk chunk, NbtLevel.NbtSection section)
@@ -116,34 +120,34 @@ namespace Netherite.Worlds
                 }
 
                 var palette = section.Palette;
+                foreach(var p in palette)
+                {
+                    BlockState s = BlockState.FromNbt(p);
+                    Palette.Add(s);
+                }
 
                 for (int i = 0; i < 4096; i++)
                 {
-                    byte b = blocks[i];
-
-                    if (b < palette.Count)
-                    {
-                        NbtBlockState bs = palette[b];
-                        BlockState s = BlockState.FromNbt(bs);
-                        Blocks[i] = new Block(s);
-                    }
-                    else
-                    {
-                        Blocks[i] = new Block(new BlockState(new Identifier("air")));
-                    }
+                    BlockIndices[i] = blocks[i];
                 }
 
-                BlockLight = new NibbleArray(section.SkyLight);
+                byte[] blbuf = section.BlockLight;
+                if (blbuf == null) blbuf = new byte[2048];
+                BlockLight = new NibbleArray(blbuf);
             }
             else
             {
-                Array.Fill(Blocks, new Block(new BlockState(new Identifier("air"))));
+                Palette.Add(new BlockState(new Identifier("air")));
+                Array.Fill(BlockIndices, (byte)0);
+                BitsPerBlock = 4;
 
                 BlockLight = new NibbleArray(4096);
                 BlockLight.Fill(15);
             }
 
-            SkyLight = new NibbleArray(section.SkyLight);
+            byte[] slbuf = section.SkyLight;
+            if (slbuf == null) slbuf = new byte[2048];
+            SkyLight = new NibbleArray(slbuf);
         }
 
         private void ValidateYFlag(short flag)
@@ -158,11 +162,23 @@ namespace Netherite.Worlds
             throw new ArgumentException($"Bitmask {flag:b16} is invalid");
         }
 
-        public Block GetBlock(int x, int y, int z) => Blocks[ToOneDimensionIndex(x, y, z)];
+        public Block GetBlock(int x, int y, int z) => GetBlock(ToOneDimensionIndex(x, y, z));
 
-        public void SetBlock(int x, int y, int z, Block b) => Blocks[ToOneDimensionIndex(x, y, z)] = b;
+        public Block GetBlock(int index) => new Block(Palette[BlockIndices[index]]);
 
-        public void FillYWithBlock(int y, Block b)
+        public void SetBlock(int x, int y, int z, BlockState b)
+        {
+            if(!Palette.Contains(b))
+            {
+                Palette.Add(b);
+                BlockIndices[ToOneDimensionIndex(x, y, z)] = Palette.Count - 1;
+            } else
+            {
+                BlockIndices[ToOneDimensionIndex(x, y, z)] = Palette.FindIndex(a => a.Equals(b));
+            }
+        }
+
+        public void FillYWithBlock(int y, BlockState b)
         {
             for (int x = 0; x < 16; x++)
             {
@@ -175,7 +191,7 @@ namespace Netherite.Worlds
 
         private int ToOneDimensionIndex(int x, int y, int z) => (y * 16 + z) * 16 + x;
 
-        public int Count => Blocks.Sum(b => b.State.Material == Material.Air ? 0 : 1);
+        public int Count => BlockIndices.Sum(b => Palette[b].Material == Material.Air ? 0 : 1);
 
         public bool IsEmpty => Count == 0;
     }

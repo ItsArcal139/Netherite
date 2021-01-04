@@ -19,6 +19,10 @@ namespace Netherite.Worlds.Dimensions
         public override bool Ultrawarm => true;
         public override bool HasCeiling => true;
 
+        // 1.17
+        public override int Height => 128;
+        public override int MinY => 0;
+
         internal NetherDimension() : base(new Identifier("the_nether")) { }
     }
 }

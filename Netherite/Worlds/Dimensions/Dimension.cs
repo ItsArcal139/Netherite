@@ -36,6 +36,10 @@ namespace Netherite.Worlds.Dimensions
 
         public abstract bool HasCeiling { get; }
 
+        public abstract int MinY { get; }
+
+        public abstract int Height { get; }
+
         public Identifier Name { get; private set; }
 
         public int Id { get; private set; }
@@ -99,6 +103,10 @@ namespace Netherite.Worlds.Dimensions
             element.Add("coordinate_scale", new NbtDouble(CoordinateScale));
             element.Add("ultrawarm", new NbtByte(Ultrawarm));
             element.Add("has_ceiling", new NbtByte(HasCeiling));
+
+            // 1.17
+            element.Add("min_y", new NbtInt(MinY));
+            element.Add("height", new NbtInt(Height));
 
             result.Add("element", element);
             return result;

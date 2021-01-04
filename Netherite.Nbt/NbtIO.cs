@@ -115,19 +115,11 @@ namespace Netherite.Nbt
 
         internal static string ReadString(byte[] buffer, ref int index)
         {
-            try
-            {
-                ushort length = ReadUShort(buffer, ref index);
-                byte[] result = new byte[length];
-                Array.Copy(buffer, index, result, 0, length);
-                index += (int)length;
-                return Encoding.UTF8.GetString(result);
-            } catch(Exception ex)
-            {
-                File.WriteAllBytes("ChunkDump.nbt", buffer);
-                Console.WriteLine(ex);
-                return null;
-            }
+            ushort length = ReadUShort(buffer, ref index);
+            byte[] result = new byte[length];
+            Array.Copy(buffer, index, result, 0, length);
+            index += length;
+            return Encoding.UTF8.GetString(result);
         }
 
         internal static byte Peek(byte[] buffer, ref int index)

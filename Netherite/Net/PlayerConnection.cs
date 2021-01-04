@@ -30,6 +30,7 @@ using System.Numerics;
 using Vector3 = Netherite.Physics.Vector3;
 using Netherite.Blocks;
 using System.IO;
+using Netherite.Net.Packets.Play.Serverbound;
 
 namespace Netherite.Net
 {
@@ -104,20 +105,23 @@ namespace Netherite.Net
 
             ReceivedPacket += async p =>
             {
-                Logger.LogPacket(
-                    TranslateText.Of("{0} {1} ")
-                        .AddWith(
-                            LiteralText.Of("<--").SetColor(TextColor.Aqua)
-                        )
-                        .AddWith(
-                            LiteralText.Of($"[{Player?.Name ?? Handle.RemoteEndPoint.ToString()}]").SetColor(TextColor.DarkGray)
-                        )
-                        .AddExtra(
-                            TranslateText.Of("Received: \t{0} \t{1}").AddWith(
-                                LiteralText.Of(CurrentState.ToString() + ((byte)CurrentState > 0 ? "\t" : "")).SetColor(TextColor.Green),
-                                LiteralText.Of(p.GetType().Name).SetColor(TextColor.Gold)
+                if (!(p is UpdatePlayerPosition) && !(p is KeepAlivePacket) && !(p is UpdatePlayerLook) && !(p is UpdatePlayerPositionAndLook) && !(p is PlayerOnGround))
+                {
+                    Logger.LogPacket(
+                        TranslateText.Of("{0} {1} ")
+                            .AddWith(
+                                LiteralText.Of("<--").SetColor(TextColor.Aqua)
                             )
-                        ));
+                            .AddWith(
+                                LiteralText.Of($"[{Player?.Name ?? Handle.RemoteEndPoint.ToString()}]").SetColor(TextColor.DarkGray)
+                            )
+                            .AddExtra(
+                                TranslateText.Of("Received: \t{0} \t{1}").AddWith(
+                                    LiteralText.Of(CurrentState.ToString() + ((byte)CurrentState > 0 ? "\t" : "")).SetColor(TextColor.Green),
+                                    LiteralText.Of(p.GetType().Name).SetColor(TextColor.Gold)
+                                )
+                            ));
+                }
 
                 if (p is SetProtocol rp)
                 {
@@ -133,16 +137,25 @@ namespace Netherite.Net
 
                 if (p is StatusRequest)
                 {
+                    var version = "";
+                    foreach (var prot in Protocol.LoadedProtocols)
+                    {
+                        if (prot.Version > 0)
+                            version += ", " + prot.VersionName;
+                    }
+                    version = version[2..];
+
                     var r = new ProtocolResponse
                     {
                         Description = LiteralText.Of("Netherite"),
                         Players = new ProtocolResponse.PlayersMeta()
                         {
-                            Max = 1
+                            Max = 10,
+                            Online = Server.OnlinePlayers.Count
                         },
                         Version = new ProtocolResponse.VersionMeta()
                         {
-                            Name = "Netherite 0.1 (MC 1.16.4)",
+                            Name = $"Netherite 0.1 (MC {version})",
                             Protocol = Protocol.HasVersion(clientProtocol) ? clientProtocol : Protocol.LatestVersion
                         }
                     };
@@ -226,7 +239,10 @@ namespace Netherite.Net
 
                         await SendPacketAsync(new LoginKick(LiteralText.Of("[Netherite] ")
                             .AddExtra(
-                                LiteralText.Of("Netherite currently supports " + supported[2..]).SetColor(TextColor.Red)
+                                LiteralText.Of("Netherite currently supports " + supported[2..] + "\n").SetColor(TextColor.Red)
+                            )
+                            .AddExtra(
+                                LiteralText.Of("You are on protocol version " + (int.MaxValue + clientProtocol + 0x40000000))
                             )));
                     }
                 }
@@ -352,31 +368,7 @@ namespace Netherite.Net
 
             await SendPlayerInfo();
 
-            for (int i = 0; i < 11; i++)
-            {
-                for (int j = 0; j < 11; j++)
-                {
-                    await SendPacketAsync(new ChunkDataPacket
-                    {
-                        Chunk = Player.World.GetChunk(i - 6, j - 6)
-                    });
-                    if (!Connected) break;
-                }
-                if (!Connected) break;
-            }
-
-            await SendPacketAsync(new BlockChange
-            {
-                Position = new Vector3
-                {
-                    X = 0,
-                    Y = 1,
-                    Z = 0
-                },
-                State = new BlockState(new Identifier("grass_block"))
-            });
-
-            Player.Position = new Vector3(0.5, 3, 0.5);
+            Player.Position = new Vector3(280, 30, 28);
 
             foreach (var player in Server.OnlinePlayers)
             {
@@ -384,43 +376,33 @@ namespace Netherite.Net
                 {
                     await SendPacketAsync(new SpawnPlayer
                     {
-                        EntityID = player.Handle,
-                        Guid = player.Guid,
-                        X = player.Position.X,
-                        Y = player.Position.Y,
-                        Z = player.Position.Z,
-                        Yaw = 0,
-                        Pitch = 0,
+                        Player = player,
                         CurrentItem = 0,
                         Metadata = player.Metadata
                     });
 
                     await player.Client.SendPacketAsync(new SpawnPlayer
                     {
-                        EntityID = Player.Handle,
-                        Guid = Player.Guid,
-                        X = Player.Position.X,
-                        Y = Player.Position.Y,
-                        Z = Player.Position.Z,
-                        Yaw = 0,
-                        Pitch = 0,
+                        Player = Player,
                         CurrentItem = 0,
                         Metadata = player.Metadata
                     });
                 }
             }
 
-            await SendPacketAsync(new PlayerPositionAndLook
+            Chunk center = Player.World.GetChunkByBlockPos((int)Player.Position.X, (int)Player.Position.Z);
+            await SendPacketAsync(new ViewPosition
             {
-                X = Player.Position.X,
-                Y = Player.Position.Y,
-                Z = Player.Position.Z
+                ChunkX = center.X,
+                ChunkZ = center.Z
             });
 
             await SendPacketAsync(new ChatPacket(LiteralText.Of("[Netherite] Hello from Netherite"), ChatPacket.ChatPosition.Chat, Guid.NewGuid()));
 
-            // await SendPacketAsync(new PacketPlayOutKick(LiteralText.Of("[Netherite] Wait until Netherite has been fully implemented!")));
+            ReadyForTick = true;
         }
+
+        public bool ReadyForTick { get; private set; } = false;
 
         public async Task DisconnectAsync(Text reason)
         {
@@ -604,8 +586,6 @@ namespace Netherite.Net
 
         private SemaphoreSlim writeLock = new SemaphoreSlim(1, 1);
 
-        private int cdc = 0;
-
         /// <summary>
         /// 將指定的封包 <see cref="Packet"/> 傳送給玩家。
         /// </summary>
@@ -619,11 +599,6 @@ namespace Netherite.Net
             {
                 await Protocol.Write(packet, writer);
                 byte[] buffer = writer.ToBuffer();
-
-                if (packet is ChunkDataPacket)
-                {
-                    File.WriteAllBytes("dump" + (cdc++) + ".bin", buffer);
-                }
 
                 Logger.LogPacket(
                     TranslateText.Of("{0} {1} ")

@@ -44,7 +44,7 @@ namespace Netherite.Net.IO
             WriteByte((byte)Math.Round(d * 32));
         }
 
-        public void WriteIntPos(Vector3 pos)
+        public void WriteLongPos(Vector3 pos)
         {
             int x = (int)pos.X;
             int y = (int)pos.Y;
@@ -56,16 +56,32 @@ namespace Netherite.Net.IO
 
         public void WriteVarInt(int value)
         {
+            uint v = (uint)value;
             do
             {
-                byte temp = (byte)(value & 0b01111111);
-                value >>= 7;
-                if (value != 0)
+                byte temp = (byte)(v & 0b01111111);
+                v >>= 7;
+                if (v != 0)
                 {
                     temp |= 0b10000000;
                 }
                 container.Add(temp);
-            } while (value != 0);
+            } while (v != 0);
+        }
+
+        public void WriteVarLong(long value)
+        {
+            ulong v = (ulong)value;
+            do
+            {
+                byte temp = (byte)(v & 0b01111111);
+                v >>= 7;
+                if (v != 0)
+                {
+                    temp |= 0b10000000;
+                }
+                container.Add(temp);
+            } while (v != 0);
         }
 
         public void WriteBool(bool flag)
@@ -137,7 +153,13 @@ namespace Netherite.Net.IO
 
         public void WriteGuid(Guid g)
         {
-            container.AddRange(g.ToByteArray());
+            // Converts .NET Guid to Java UUID.
+            // The 8 most significant bits are reversed in groups.
+            byte[] buf = g.ToByteArray();
+            Array.Reverse(buf, 0, 4);
+            Array.Reverse(buf, 4, 2);
+            Array.Reverse(buf, 6, 2);
+            container.AddRange(buf);
         }
 
         public void WriteByte(byte b)

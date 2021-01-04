@@ -1,4 +1,5 @@
-﻿using Netherite.Net.IO;
+﻿using Netherite.Attributes;
+using Netherite.Net.IO;
 using Netherite.Net.Packets;
 using Netherite.Net.Packets.Handshake.Serverbound;
 using Netherite.Net.Packets.Login;
@@ -12,6 +13,7 @@ using Netherite.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -62,7 +64,7 @@ namespace Netherite.Net.Protocols
                     map = playInHandlers;
                     break;
                 default:
-                    throw new ArgumentException("state is unknown");
+                    throw new ArgumentException($"Unknown state {state}");
             }
 
             if(!map.ContainsKey(id))
@@ -115,11 +117,28 @@ namespace Netherite.Net.Protocols
                 int max = int.MinValue;
                 foreach (int n in protocols.Keys)
                 {
+                    if (n > 0x40000000) continue;
                     max = Math.Max(max, n);
                 }
                 return max;
             }
         }
+
+        public static int LatestSnapshot
+        {
+            get
+            {
+                int max = int.MinValue;
+                foreach (int n in protocols.Keys)
+                {
+                    if (n <= 0x40000000) continue;
+                    max = Math.Max(max, n);
+                }
+                return max;
+            }
+        }
+
+        public bool IsSnapshot => Version > 0x40000000;
 
         public static Protocol LatestProtocol => FromVersion(LatestVersion);
 
@@ -168,8 +187,29 @@ namespace Netherite.Net.Protocols
             protocolTypes.Remove(t);
         }
 
+        private void CheckUsingPreview(Type t)
+        {
+            var attr = t.GetCustomAttribute<PreReleaseAttribute>();
+            if (attr != null)
+            {
+                Logger.Warn(
+                    TranslateText.Of(
+                        "Protocol %s %s registered a packet %s, which is not in a stable release of Minecraft."
+                    ).AddWith(
+                        LiteralText.Of(VersionName).SetColor(TextColor.Gold)
+                    ).AddWith(
+                        LiteralText.Of($"({Version})").SetColor(TextColor.DarkGray)
+                    ).AddWith(
+                        LiteralText.Of(t.Name).SetColor(TextColor.Red)
+                    ));
+            }
+        }
+
         protected void RegisterIncoming<T>(PacketState state, int id, Func<BufferReader, T> handler) where T : Packet
         {
+            Type t = typeof(T);
+            CheckUsingPreview(t);
+
             Dictionary<int, Func<BufferReader, Packet>> map;
             switch (state)
             {
@@ -196,6 +236,9 @@ namespace Netherite.Net.Protocols
 
         protected void RegisterOutgoing<T>(OutgoingPacketHandler<T> handler) where T : Packet
         {
+            Type t = typeof(T);
+            CheckUsingPreview(t);
+
             outHandlers.Add(typeof(T), (p, writer) =>
             {
                 // -- Why bother wrapping it...?

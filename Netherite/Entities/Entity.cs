@@ -44,6 +44,11 @@ namespace Netherite.Entities
         {
             return map[id];
         }
+
+        public virtual void Tick()
+        {
+
+        }
     }
 
     public class DummyEntity : Entity

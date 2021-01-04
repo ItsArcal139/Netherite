@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Netherite.Net.Protocols
 {
@@ -16,50 +17,58 @@ namespace Netherite.Net.Protocols
         private static SemaphoreSlim contextLock = new SemaphoreSlim(1, 1);
         private static List<Type> protocols = new List<Type>();
 
-        public async static void LoadDLLs()
+        public static void LoadProtocols()
         {
-            await contextLock.WaitAsync();
-
             Logger.Info(
                 LiteralText.Of("Loading protocols...")
-                ); ;
-            try
-            {                   
-                foreach(Type t in protocols)
-                {
-                    Protocol.Unregister(t);
-                }
-                protocols.Clear();
+                );
 
-                context.Unload();
-                context = new AssemblyLoadContext(nameof(ProtocolLoader));
-                        
-                if (!Directory.Exists("Protocols"))
-                {
-                    Directory.CreateDirectory("Protocols");
-                }
+            foreach (Type t in protocols)
+            {
+                Protocol.Unregister(t);
+            }
+            protocols.Clear();
 
-                string[] files = Directory.GetFiles("Protocols");
-                foreach (string file in files)
+            context.Unload();
+            context = new AssemblyLoadContext(nameof(ProtocolLoader));
+
+            if (!Directory.Exists("Protocols"))
+            {
+                Directory.CreateDirectory("Protocols");
+            }
+
+            string[] files = Directory.GetFiles("Protocols");
+            foreach (string file in files)
+            {
+                if (file.ToLower().EndsWith(".dll"))
                 {
-                    if (file.ToLower().EndsWith(".dll"))
+                    string path = Directory.GetCurrentDirectory() + "\\" + file;
+                    Assembly asm = context.LoadFromAssemblyPath(path);
+                    foreach (Type t in asm.GetTypes())
                     {
-                        string path = Directory.GetCurrentDirectory() + "\\" + file;
-                        Assembly asm = context.LoadFromAssemblyPath(path);
-                        foreach(Type t in asm.GetTypes())
+                        if (typeof(Protocol).IsAssignableFrom(t))
                         {
-                            if(typeof(Protocol).IsAssignableFrom(t))
-                            {
-                                RuntimeHelpers.RunClassConstructor(t.TypeHandle);
-                                protocols.Add(t);
-                            }
+                            RuntimeHelpers.RunClassConstructor(t.TypeHandle);
+                            protocols.Add(t);
                         }
                     }
                 }
-            } finally
-            {
-                contextLock.Release();
             }
+        }
+
+        public async static Task LoadProtocolsAsync()
+        {
+            await Task.Run(async () => {
+                await contextLock.WaitAsync();
+                try
+                {
+                    LoadProtocols();
+                }
+                finally
+                {
+                    contextLock.Release();
+                }
+            });
         }
     }
 }

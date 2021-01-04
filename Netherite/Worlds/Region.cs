@@ -5,11 +5,15 @@ using Netherite.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Netherite.Worlds
 {
     public class Region : IDisposable
     {
+        public const int LatestStableDataVersion = 2584;
+
         public int DataVersion { get; private set; }
 
         public int X { get; private set; }
@@ -47,7 +51,7 @@ namespace Netherite.Worlds
             fs.Read(a, 1, 3);
             int b = fs.ReadByte();
 
-            if(BitConverter.IsLittleEndian)
+            if (BitConverter.IsLittleEndian)
             {
                 Array.Reverse(a);
             }
@@ -57,11 +61,15 @@ namespace Netherite.Worlds
 
         public Chunk GetChunk(int chunkX, int chunkZ)
         {
-            if(map.ContainsKey((chunkX, chunkZ)))
+            if (!map.ContainsKey((chunkX, chunkZ)))
             {
-                return map[(chunkX, chunkZ)];
+                LoadChunk(chunkX, chunkZ);
             }
+            return map[(chunkX, chunkZ)];
+        }
 
+        public void LoadChunk(int chunkX, int chunkZ)
+        {
             // Don't know how to use the 2nd parameter...
             var (offset, _) = GetChunkOffsetAndSize(chunkX, chunkZ);
 
@@ -86,23 +94,47 @@ namespace Netherite.Worlds
             if (compressMode == 1)
             {
                 chunk = GZipUtils.Decompress(buf);
-            } else
+            }
+            else
             {
                 chunk = ZLibUtils.Decompress(buf);
             }
 
             int i = 0;
+
             NbtCompound c = (NbtCompound)NbtTag.Deserialize(chunk, ref i, true);
             DataVersion = ((NbtInt)c["DataVersion"]).Value;
+            if (DataVersion > LatestStableDataVersion)
+            {
+                Logger.Warn("You are loading a preview version world. This is not supported.");
+            }
 
+            // File.WriteAllBytes(fs.Name + $"({chunkX},{chunkZ}).nbt", NbtConvert.SerializeToBuffer(c));
             var level = NbtConvert.Deserialize<NbtLevel>(c["Level"]);
 
             Chunk ck = new Chunk(this, chunkX, chunkZ, level);
             map[(chunkX, chunkZ)] = ck;
-            return ck;
         }
 
-        public static Region ReadFromFile(string name, World w, int x, int z)
+        private SemaphoreSlim chunkLoadLock = new SemaphoreSlim(1, 1);
+
+        public async Task LoadChunkAsync(int chunkX, int chunkZ)
+        {
+            await chunkLoadLock.WaitAsync();
+            LoadChunk(chunkX, chunkZ);
+            chunkLoadLock.Release();
+        }
+
+        public async Task<Chunk> GetChunkAsync(int chunkX, int chunkZ)
+        {
+            if (!map.ContainsKey((chunkX, chunkZ)))
+            {
+                await LoadChunkAsync(chunkX, chunkZ);
+            }
+            return map[(chunkX, chunkZ)];
+        }
+
+        public static Region FromFile(string name, World w, int x, int z)
         {
             Region result = new Region(w, x, z);
             FileStream fs = new FileStream(name, FileMode.Open);

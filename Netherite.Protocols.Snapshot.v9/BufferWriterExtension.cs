@@ -2,9 +2,12 @@
 using Netherite.Nbt;
 using Netherite.Net.IO;
 using Netherite.Worlds;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 
-namespace Netherite.Protocols.v754
+namespace Netherite.Protocols.Snapshot.v9
 {
     public static class BufferWriterExtension
     {
@@ -12,19 +15,19 @@ namespace Netherite.Protocols.v754
         {
             writer.WriteInt(chunk.X);
             writer.WriteInt(chunk.Z);
-            writer.WriteBool(true); // full chunk
 
             int mask = 0;
             BufferWriter col = new BufferWriter();
-            for (int sectionY = 0; sectionY < (256 / 16); sectionY++)
+            int count = 0;
+            foreach(var section in chunk.Sections)
             {
-                if (!chunk.IsSectionEmpty(sectionY))
+                if(section.Count != 0)
                 {
-                    mask |= (1 << sectionY);
-                    col.WriteChunkSection(chunk.Sections[sectionY]);
+                    mask |= (int)section.YFlag;
+                    col.WriteChunkSection(section);
+                    count++;
                 }
             }
-
             writer.WriteVarInt(mask);
 
             NbtCompound heightmap = new NbtCompound();
@@ -32,16 +35,29 @@ namespace Netherite.Protocols.v754
             heightmap.Add("MOTION_BLOCKING", new NbtLongArray(chunk.Heightmap.MotionBlocking));
             writer.WriteNbt(heightmap);
 
-            writer.WriteVarInt(1024);
+            // Biomes
+            writer.WriteVarInt(chunk.Biomes.Length);
             foreach (var biome in chunk.Biomes)
             {
-                writer.WriteVarInt(biome.Id);
+                writer.WriteVarInt(biome?.Id ?? 0);
             }
 
+            // Chunk Data
             byte[] buf = col.ToBuffer();
             writer.WriteByteArray(buf);
 
+            // Block entities
             writer.WriteVarInt(0);
+
+            if(mask != 1)
+            {
+                byte[] buf2 = writer.ToBuffer();
+                foreach(var b in buf2)
+                {
+                    writer.WriteByte(b);
+                }
+                File.WriteAllBytes("chunkdata.bin", buf2);
+            }
         }
 
         private static int GetArrayLength(int bit)
@@ -50,7 +66,7 @@ namespace Netherite.Protocols.v754
             int b = 0;
             for (int i = 0; i < 4096; i++)
             {
-                if(b + bit > 64)
+                if (b + bit > 64)
                 {
                     result++;
                     b = 0;
@@ -88,8 +104,7 @@ namespace Netherite.Protocols.v754
 
             for (int i = 0; i < 4096; i++)
             {
-                Block b = section.GetBlock(i);
-                string state = b.State.ToString();
+                string state = section.Palette[section.BlockIndices[i]].ToString();
                 ulong pid;
 
                 if (bitsPerBlock <= 8)
@@ -97,7 +112,11 @@ namespace Netherite.Protocols.v754
                     if (!paletteMap.ContainsKey(state))
                     {
                         paletteMap.Add(state, (ulong)counter);
-                        palette.Add(Registry.IdState.Find(t => t.Item2 == state).Item1);
+
+                        var t = Registry.IdState.Find(t => t.Item2 == state);
+                        var a = t.Item1;
+                        if (t.Item2 == null) a = paletteMap.Count;
+                        palette.Add(a);
                         pid = (ulong)counter++;
                     }
                     else
@@ -148,7 +167,6 @@ namespace Netherite.Protocols.v754
             {
                 writer.WriteByte(b);
             }
-
         }
     }
 }

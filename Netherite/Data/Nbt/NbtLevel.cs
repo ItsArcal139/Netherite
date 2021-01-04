@@ -49,6 +49,8 @@ namespace Netherite.Data.Nbt
 
             public byte[] SkyLight { get; set; }
 
+            public byte[] BlockLight { get; set; }
+
             public byte Y { get; set; }
         }
 

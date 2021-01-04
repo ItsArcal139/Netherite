@@ -9,5 +9,7 @@ namespace Netherite.Protocols.v754
     public partial class Registry
     {
         public Block GetBlock(short state) => new Block(new BlockState(Blocks[StateToMatch[state].Numeric]));
+
+        public static void EnsureLoad() { }
     }
 }

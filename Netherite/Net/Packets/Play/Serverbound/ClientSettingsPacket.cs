@@ -9,11 +9,13 @@ namespace Netherite.Net.Packets.Play.Serverbound
 
         public byte ViewDistance { get; set; }
 
-        public byte ChatMode { get; set; }
+        public int ChatMode { get; set; }
 
         public bool ChatColors { get; set; }
 
         public SkinPart SkinParts { get; set; }
+
+        public int Mainhand { get; set; }
     }
 
     [Flags]
