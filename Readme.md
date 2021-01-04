@@ -5,8 +5,8 @@ A Minecraft server implementation written with C#.
 - [x] Basic packet IO
 - [x] Multiple version compatibility
 - [x] Player movement / chat
-- [x] Basic chunk loading
-- [x] Block placing / breaking
+- [ ] Basic chunk loading
+- [ ] Block placing / breaking
 - [ ] Entity / Block entity
 - [ ] Daylight Cycle
 - [ ] Inventory

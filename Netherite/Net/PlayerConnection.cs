@@ -242,7 +242,7 @@ namespace Netherite.Net
                                 LiteralText.Of("Netherite currently supports " + supported[2..] + "\n").SetColor(TextColor.Red)
                             )
                             .AddExtra(
-                                LiteralText.Of("You are on protocol version " + (int.MaxValue + clientProtocol + 0x40000000))
+                                LiteralText.Of("You are on protocol version " + clientProtocol)
                             )));
                     }
                 }
@@ -539,10 +539,10 @@ namespace Netherite.Net
 
         public event Action<Packet> ReceivedPacket;
 
-        /// <summary>
-        /// 讀取玩家端傳送的封包。
+        /// <summary xml:lang="de">
+        /// Reads the <see cref="Packet"/> from the client.
         /// </summary>
-        /// <param name="buffer">封包內容。</param>
+        /// <param name="buffer">The content of the packet.</param>
         /// <returns></returns>
         private async Task ReadPacketAsync(byte[] buffer)
         {
@@ -587,7 +587,7 @@ namespace Netherite.Net
         private SemaphoreSlim writeLock = new SemaphoreSlim(1, 1);
 
         /// <summary>
-        /// 將指定的封包 <see cref="Packet"/> 傳送給玩家。
+        /// Sends the given <see cref="Packet"/> to the client.
         /// </summary>
         /// <returns></returns>
         public async Task SendPacketAsync(Packet packet)
