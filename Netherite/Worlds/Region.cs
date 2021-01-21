@@ -77,7 +77,7 @@ namespace Netherite.Worlds
             {
                 // Not generated, create a new one
                 var dummy = new Chunk(this, chunkX, chunkZ);
-                map[(chunkX, chunkZ)] = dummy;
+                map.Add((chunkX, chunkZ), dummy);
                 return;
             }
 
@@ -122,7 +122,7 @@ namespace Netherite.Worlds
             var level = NbtConvert.Deserialize<NbtLevel>(c["Level"]);
 
             Chunk ck = new Chunk(this, chunkX, chunkZ, level);
-            map[(chunkX, chunkZ)] = ck;
+            map.Add((chunkX, chunkZ), ck);
         }
 
         private SemaphoreSlim chunkLoadLock = new SemaphoreSlim(1, 1);

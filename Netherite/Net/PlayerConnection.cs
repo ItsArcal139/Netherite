@@ -559,6 +559,7 @@ namespace Netherite.Net
                         {
                             await SendPacketAsync(new Kick(LiteralText.Of("[Netherite] Timed out")));
                         }
+                        await Task.Delay(1000);
                     }
                 });
 

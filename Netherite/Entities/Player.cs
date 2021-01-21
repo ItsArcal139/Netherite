@@ -215,7 +215,7 @@ namespace Netherite.Entities
             }
 
             var unloadList = LoadedChunks.FindAll(c => !nearby.Contains(c));
-            foreach(var chunk in unloadList)
+            foreach (var chunk in unloadList)
             {
                 LoadedChunks.Remove(chunk);
                 await UnloadChunkAsync(chunk);
@@ -223,9 +223,27 @@ namespace Netherite.Entities
         }
         #endregion
 
+        private bool startedChunkTask = false;
+
         public override void Tick()
         {
-            UpdateChunks().GetAwaiter().GetResult();
+            _ = Client.SendPacketAsync(new TimeUpdate
+            {
+                WorldAge = World.Time,
+                WorldTime = World.Time
+            });
+
+            if (!startedChunkTask)
+            {
+                startedChunkTask = true;
+                Task.Run(async () =>
+                {
+                    while(Client.Connected)
+                    {
+                        await UpdateChunks();
+                    }
+                });
+            }
         }
 
         public async Task LoadChunkAsync(Chunk chunk)
