@@ -70,8 +70,14 @@ namespace Netherite.Worlds
 
         public void LoadChunk(int chunkX, int chunkZ)
         {
-            // Don't know how to use the 2nd parameter...
             var (offset, _) = GetChunkOffsetAndSize(chunkX, chunkZ);
+            if (offset == 0)
+            {
+                // Not generated, create a new one
+                var dummy = new Chunk(this, chunkX, chunkZ);
+                map[(chunkX, chunkZ)] = dummy;
+                return;
+            }
 
             byte[] a = new byte[4];
             fs.Seek(offset, SeekOrigin.Begin);
@@ -100,9 +106,7 @@ namespace Netherite.Worlds
                 chunk = ZLibUtils.Decompress(buf);
             }
 
-            int i = 0;
-
-            NbtCompound c = (NbtCompound)NbtTag.Deserialize(chunk, ref i, true);
+            NbtCompound c = (NbtCompound)NbtTag.Deserialize(chunk, true);
             DataVersion = ((NbtInt)c["DataVersion"]).Value;
             if (DataVersion > LatestStableDataVersion)
             {
@@ -117,6 +121,22 @@ namespace Netherite.Worlds
         }
 
         private SemaphoreSlim chunkLoadLock = new SemaphoreSlim(1, 1);
+
+        public DateTime GetLastModifiedTime(Chunk chunk)
+        {
+            var (offset, _) = GetChunkOffsetAndSize(chunk.X, chunk.Z);
+            if (offset == 0) return DateTime.Now;
+            offset = offset / 4096 - 2;
+
+            byte[] val = new byte[4];
+            Array.Copy(header, 4096 + 4 * offset, val, 0, 4);
+
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(val);
+            }
+            return DateTime.UnixEpoch.AddSeconds(BitConverter.ToInt32(val));
+        }
 
         public async Task LoadChunkAsync(int chunkX, int chunkZ)
         {
@@ -137,11 +157,24 @@ namespace Netherite.Worlds
         public static Region FromFile(string name, World w, int x, int z)
         {
             Region result = new Region(w, x, z);
-            FileStream fs = new FileStream(name, FileMode.Open);
-            fs.Read(result.header, 0, result.header.Length);
+            FileStream fs = new FileStream(name, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+
+            if (File.Exists(name))
+            {
+                fs.Read(result.header, 0, result.header.Length);
+            } else
+            {
+                // TODO: World generation
+                result.Save();
+            }
 
             result.fs = fs;
             return result;
+        }
+
+        public void Save()
+        {
+            fs.Write(header, 0, 8192);
         }
 
         protected virtual void Dispose(bool disposing)

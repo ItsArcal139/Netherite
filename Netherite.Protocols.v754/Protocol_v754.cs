@@ -163,12 +163,26 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x04);
             });
 
+            RegisterOutgoing<BlockChange>((p, writer) =>
+            {
+                writer.WriteLongPos(p.Position);
+                writer.WriteVarInt(Registry.IdState.Find(t => t.Item2 == p.State.ToString()).Item1);
+                writer.Flush(0x0b);
+            });
+
             RegisterOutgoing<ChatPacket>((p, writer) =>
             {
                 writer.WriteChat(p.Message);
                 writer.WriteByte((byte)p.Position);
                 writer.WriteGuid(p.SenderGuid);
                 writer.Flush(0x0e);
+            });
+
+            RegisterOutgoing<UnloadChunkPacket>((p, writer) =>
+            {
+                writer.WriteInt(p.Chunk.X);
+                writer.WriteInt(p.Chunk.Z);
+                writer.Flush(0x1c);
             });
 
             RegisterOutgoing<PluginMessage>((p, writer) =>

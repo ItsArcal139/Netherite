@@ -31,7 +31,7 @@ namespace Netherite.Net
             socket.Listen(0);
 
             Protocol.EnsureLoad();
-            _ = ProtocolLoader.LoadProtocolsAsync();
+            ProtocolLoader.LoadProtocols();
         }
         
         public void Stop()

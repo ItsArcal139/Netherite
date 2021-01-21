@@ -368,7 +368,7 @@ namespace Netherite.Net
 
             await SendPlayerInfo();
 
-            Player.Position = new Vector3(280, 30, 28);
+            Player.Position = new Vector3(280, Player.World.GetHighestBlockY(280, 28) + 1, 28);
 
             foreach (var player in Server.OnlinePlayers)
             {
@@ -428,22 +428,29 @@ namespace Netherite.Net
 
         private async Task SendPlayerInfo()
         {
-            foreach (var player in Server.OnlinePlayers)
+            List<Player> all = Server.OnlinePlayers;
+            all.Add(Player);
+
+            await SendPacketAsync(new PlayerInfo
+            {
+                Action = PlayerInfo.PacketAction.AddPlayer,
+                Players = all.ConvertAll(pl =>
+                {
+                    return new PlayerInfo.Meta
+                    {
+                        Profile = pl.Profile,
+                        Mode = pl.Mode,
+                        Latency = 0
+                    };
+                })
+            });
+
+            foreach (var player in all)
             {
                 var p = new PlayerInfo
                 {
                     Action = PlayerInfo.PacketAction.AddPlayer,
-                    Players = player == Player ? (
-                        Server.OnlinePlayers.ConvertAll(pl =>
-                        {
-                            return new PlayerInfo.Meta
-                            {
-                                Profile = pl.Profile,
-                                Mode = pl.Mode,
-                                Latency = 0
-                            };
-                        })
-                    ) : (new List<PlayerInfo.Meta>
+                    Players = new List<PlayerInfo.Meta>
                     {
                         new PlayerInfo.Meta
                         {
@@ -451,7 +458,7 @@ namespace Netherite.Net
                             Mode = Player.Mode,
                             Latency = 0
                         }
-                    })
+                    }
                 };
 
                 await player.Client.SendPacketAsync(p);
@@ -599,6 +606,11 @@ namespace Netherite.Net
             {
                 await Protocol.Write(packet, writer);
                 byte[] buffer = writer.ToBuffer();
+
+                if (packet is PlayerPositionAndLook)
+                {
+                    File.WriteAllBytes("packet.bin", buffer);
+                }
 
                 Logger.LogPacket(
                     TranslateText.Of("{0} {1} ")

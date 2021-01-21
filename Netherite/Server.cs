@@ -39,7 +39,11 @@ namespace Netherite
 
             Instance = this;
 
-            Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("config.json"));
+            if(!File.Exists(Config.FilePath))
+            {
+                File.WriteAllText(Config.FilePath, "{}");
+            }
+            Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(Config.FilePath));
 
             Registry = new Registry();
 
@@ -107,11 +111,16 @@ namespace Netherite
             }
         }
 
+        public void SaveConfig()
+        {
+            string content = JsonConvert.SerializeObject(Config);
+            File.WriteAllText(Config.FilePath, content);
+        }
+
         public void Stop()
         {
             cts.Cancel();
-            string content = JsonConvert.SerializeObject(Config);
-            File.WriteAllText("config.json", content);
+            SaveConfig();
         }
     }
 }

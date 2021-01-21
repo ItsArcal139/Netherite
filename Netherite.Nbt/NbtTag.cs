@@ -55,6 +55,12 @@ namespace Netherite.Nbt
             throw new ArgumentException($"Unknown type {buffer[index]} at index {index}: {(char)buffer[index]}");
         }
 
+        public static NbtTag Deserialize(byte[] buffer, bool named = false, TagType? type = null)
+        {
+            int i = 0;
+            return Deserialize(buffer, ref i, named, type);
+        }
+
         protected static void InternalDeserializePhaseA(byte[] buffer, ref int index, bool named, TagType target, NbtTag instance)
         {
             if (named)

@@ -2,6 +2,8 @@
 {
     public class Config
     {
+        public const string FilePath = "config.json";
+
         public int Version { get; set; }
 
         public bool OnlineMode { get; set; }

@@ -34,7 +34,8 @@ namespace Netherite.Worlds
                 var r = Region.FromFile($"{Path}/region/r.{rx}.{rz}.mca", this, rx, rz);
                 regions.Add((rx, rz), r);
                 return r;
-            } else
+            }
+            else
             {
                 return regions[(rx, rz)];
             }
@@ -100,9 +101,23 @@ namespace Netherite.Worlds
 
         public Entity SpawnEntity<T>() where T : Entity => throw new NotImplementedException();
 
+        public int GetHighestBlockY(int x, int z)
+        {
+            int y = 255;
+            for (; y >= 0; y--)
+            {
+                var block = GetBlock(x, y, z);
+                if(block.State.Material != Material.Air)
+                {
+                    break;
+                }
+            }
+            return y;
+        }
+
         public void Tick()
         {
-            foreach(var entity in Entities)
+            foreach (var entity in Entities)
             {
                 entity.Tick();
             }

@@ -1,6 +1,7 @@
 ﻿using Netherite.Blocks;
 using Netherite.Data.Entities;
 using Netherite.Data.Nbt;
+using Netherite.Nbt;
 using Netherite.Texts;
 using Netherite.Utils;
 using System;
@@ -36,13 +37,13 @@ namespace Netherite.Worlds
 
             byte result = 0;
 
-            for(int i=0; i<bitPerBlock; i++)
+            for (int i = 0; i < bitPerBlock; i++)
             {
                 var n = (byte)((data[longIndex] >> (readBit++)) & 1);
                 result |= (byte)(n << i);
             }
 
-            if(RemainingBits() < bitPerBlock)
+            if (RemainingBits() < bitPerBlock)
             {
                 longIndex++;
                 readBit = 0;
@@ -100,7 +101,7 @@ namespace Netherite.Worlds
             YFlag = yFlag;
 
             Palette.Add(new BlockState(new Identifier("air")));
-            Array.Fill(BlockIndices, (byte)0);
+            Array.Fill(BlockIndices, 0);
         }
 
         internal ChunkSection(Chunk chunk, NbtLevel.NbtSection section)
@@ -120,7 +121,7 @@ namespace Netherite.Worlds
                 }
 
                 var palette = section.Palette;
-                foreach(var p in palette)
+                foreach (var p in palette)
                 {
                     BlockState s = BlockState.FromNbt(p);
                     Palette.Add(s);
@@ -154,12 +155,12 @@ namespace Netherite.Worlds
         {
             for (int i = 0; i < 16; i++)
             {
-                if (Math.Pow(2, i) == flag)
+                if ((short)(1 << i) == flag)
                 {
                     return;
                 }
             }
-            throw new ArgumentException($"Bitmask {flag:b16} is invalid");
+            throw new ArgumentException($"Bitmask {Convert.ToString(flag, 2)} is invalid");
         }
 
         public Block GetBlock(int x, int y, int z) => GetBlock(ToOneDimensionIndex(x, y, z));
@@ -168,11 +169,12 @@ namespace Netherite.Worlds
 
         public void SetBlock(int x, int y, int z, BlockState b)
         {
-            if(!Palette.Contains(b))
+            if (!Palette.Contains(b))
             {
                 Palette.Add(b);
                 BlockIndices[ToOneDimensionIndex(x, y, z)] = Palette.Count - 1;
-            } else
+            }
+            else
             {
                 BlockIndices[ToOneDimensionIndex(x, y, z)] = Palette.FindIndex(a => a.Equals(b));
             }
@@ -194,5 +196,91 @@ namespace Netherite.Worlds
         public int Count => BlockIndices.Sum(b => Palette[b].Material == Material.Air ? 0 : 1);
 
         public bool IsEmpty => Count == 0;
+
+        internal NbtLevel.NbtSection WriteToNbt()
+        {
+            var root = new NbtLevel.NbtSection();
+
+            byte bitsPerBlock = BitsPerBlock;
+            if (bitsPerBlock <= 4)
+            {
+                bitsPerBlock = 4;
+            }
+
+            if (bitsPerBlock > 8)
+            {
+                bitsPerBlock = 15;
+            }
+
+            // Palette & data
+            int counter = 0;
+            Dictionary<BlockState, ulong> paletteMap = new Dictionary<BlockState, ulong>();
+            ulong[] data = new ulong[GetDataArrayLength(bitsPerBlock)];
+
+            int sLong = 0;
+            int sOffset = 0;
+
+            for (int i = 0; i < 4096; i++)
+            {
+                BlockState state = GetBlock(i).State;
+                ulong pid;
+
+                if (!paletteMap.ContainsKey(state))
+                {
+                    paletteMap.Add(state, (ulong)counter);
+                    pid = (ulong)counter++;
+                }
+                else
+                {
+                    pid = paletteMap[state];
+                }
+
+
+                if (64 - sOffset < bitsPerBlock)
+                {
+                    sLong++;
+                    sOffset = 0;
+                }
+
+                pid &= (ulong)((1 << bitsPerBlock) - 1);
+                data[sLong] |= pid << sOffset;
+                sOffset += bitsPerBlock;
+            }
+
+            root.BlockStates = data.ToList().ConvertAll(l => (long)l).ToArray();
+            root.Palette = new List<NbtBlockState>();
+            foreach (var s in paletteMap.Keys)
+            {
+                NbtBlockState item = new NbtBlockState();
+                item.Name = "minecraft:" + Enum.GetName(typeof(Material), s.Material).ToSnakeCase();
+                if (s.Properties.Count > 0)
+                {
+                    item.Properties = new NbtCompound();
+                    foreach (var pair in s.Properties)
+                    {
+                        item.Properties.Add(pair.Key, new NbtString(pair.Value));
+                    }
+                }
+            }
+
+            return root;
+        }
+
+        private static int GetDataArrayLength(int bit)
+        {
+            int result = 0;
+            int b = 0;
+            for (int i = 0; i < 4096; i++)
+            {
+                if (b + bit > 64)
+                {
+                    result++;
+                    b = 0;
+                }
+                b += bit;
+            }
+            if (b != 0) result++;
+            return result;
+        }
     }
 }

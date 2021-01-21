@@ -1,8 +1,11 @@
 ﻿using Netherite.Api.Worlds;
 using Netherite.Blocks;
 using Netherite.Data.Nbt;
+using Netherite.Net.Protocols;
 using Netherite.Worlds.Biomes;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Netherite.Worlds
 {
@@ -28,16 +31,23 @@ namespace Netherite.Worlds
 
         public Region Region { get; private set; }
 
-        public Biome[] Biomes { get; private set; }
+        public Biome[] Biomes { get; private set; } = new Biome[1024];
 
         public ChunkSection[] Sections { get; private set; }
+
+        public DateTime LastModifiedTime => Region.GetLastModifiedTime(this);
 
         internal Chunk(Region region, int x, int z)
         {
             Region = region;
             X = x;
             Z = z;
-            Sections = new ChunkSection[0];
+            Heightmap = new Heightmap
+            {
+                MotionBlocking = new long[36]
+            };
+            Sections = new ChunkSection[16];
+            Array.Fill(Biomes, Biome.GetBiome(127));
         }
 
         internal Chunk(Region region, int x, int z, NbtLevel level)
@@ -46,22 +56,25 @@ namespace Netherite.Worlds
             X = x;
             Z = z;
 
-            Sections = new ChunkSection[level.Sections.Count - 1];
+            Sections = new ChunkSection[level.Biomes.Length / 64];
 
-            foreach(var section in level.Sections)
+            if (level.Sections != null)
             {
-                var y = section.Y;
-                if (y == 255) continue;
+                foreach (var section in level.Sections)
+                {
+                    var y = section.Y;
+                    if (y == 255) continue;
 
-                Sections[y] = new ChunkSection(this, section);
+                    Sections[y] = new ChunkSection(this, section);
+                }
             }
 
             Heightmap = new Heightmap
             {
-                MotionBlocking = level.Heightmaps.MotionBlocking,
-                MotionBlockingNoLeaves = level.Heightmaps.MotionBlockingNoLeaves,
-                OceanFloor = level.Heightmaps.OceanFloor,
-                WorldSurface = level.Heightmaps.WorldSurface
+                MotionBlocking = level.Heightmaps.MotionBlocking ?? new long[36],
+                MotionBlockingNoLeaves = level.Heightmaps.MotionBlockingNoLeaves ?? new long[36],
+                OceanFloor = level.Heightmaps.OceanFloor ?? new long[36],
+                WorldSurface = level.Heightmaps.WorldSurface ?? new long[36]
             };
 
             Biomes = new Biome[level.Biomes.Length];
@@ -102,7 +115,7 @@ namespace Netherite.Worlds
             int index = (int)Math.Floor((double)y / 16);
             if(Sections[index] == null)
             {
-                Sections[index] = new ChunkSection(this, (byte)(1 << index));
+                Sections[index] = new ChunkSection(this, (short)(1 << index));
             }
             return Sections[index];
         }
@@ -116,5 +129,30 @@ namespace Netherite.Worlds
 
         [Obsolete]
         public Biome GetBiome(int chunkX, int chunkZ) => GetBiome(chunkX, 0, chunkZ);
+
+        internal NbtLevel WriteToNbt()
+        {
+            NbtLevel root = new NbtLevel();
+            root.DataVersion = Region.LatestStableDataVersion;
+            root.Biomes = Biomes.ToList().ConvertAll(b => b.Id).ToArray();
+            root.Entities = new List<object>();
+            root.Heightmaps = new NbtLevel.HeightMapList
+            {
+                // TODO: Write real data here
+                MotionBlocking = new long[36],
+                MotionBlockingNoLeaves = new long[36],
+                OceanFloor = new long[36],
+                WorldSurface = new long[36]
+            };
+            root.InhabitedTime = 0;
+            root.LastUpdate = (long)(DateTime.Now - DateTime.UnixEpoch).TotalSeconds;
+            root.Sections = new List<NbtLevel.NbtSection>();
+            foreach(var s in Sections)
+            {
+                root.Sections.Add(s.WriteToNbt());
+            }
+
+            return root;
+        }
     }
 }

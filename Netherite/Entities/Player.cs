@@ -71,6 +71,7 @@ namespace Netherite.Entities
 
         public void ShowTitle(Text title, Text subtitle, int fadeIn, int stay, int fadeOut) => _ = ShowTitleAsync(title, subtitle, fadeIn, stay, fadeOut);
 
+        #region Player List - header & footer
         private Text listHeader = null;
 
         public Text ListHeader
@@ -109,6 +110,7 @@ namespace Netherite.Entities
         }
 
         public void SetPlayerListHeaderFooter(Text header, Text footer) => _ = SetPlayerListHeaderFooterAsync(header, footer);
+        #endregion
 
         public Vector3 CompassTarget { get; set; }
 
@@ -120,19 +122,37 @@ namespace Netherite.Entities
 
         public void PlayNote(Vector3 location, byte instrument, byte note)
         {
-
+            throw new NotImplementedException();
         }
 
+        #region Chunk load / unload
         public List<Chunk> LoadedChunks { get; } = new List<Chunk>();
 
         private Chunk lastChunk = null;
 
         private bool sentLook = false;
 
-        public override void Tick()
+        public async Task UpdateChunks()
         {
             List<Chunk> nearby = new List<Chunk>();
             Chunk center = World.GetChunkByBlockPos((int)Position.X, (int)Position.Z);
+
+            if (!sentLook)
+            {
+                _ = Client.SendPacketAsync(new ViewPosition
+                {
+                    ChunkX = center.X,
+                    ChunkZ = center.Z
+                });
+
+                await Client.SendPacketAsync(new PlayerPositionAndLook
+                {
+                    X = Position.X,
+                    Y = Position.Y + 1,
+                    Z = Position.Z,
+                    TeleportId = 9
+                });
+            }
 
             for (int i = 0; i < 5; i++)
             {
@@ -152,12 +172,13 @@ namespace Netherite.Entities
                 }
             }
 
-            if(lastChunk == null)
+            if (lastChunk == null)
             {
                 lastChunk = center;
-            } else
+            }
+            else
             {
-                if(lastChunk != center)
+                if (lastChunk != center)
                 {
                     _ = Client.SendPacketAsync(new ViewPosition
                     {
@@ -172,26 +193,48 @@ namespace Netherite.Entities
             {
                 if (!LoadedChunks.Contains(chunk))
                 {
-                    _ = LoadChunkAsync(chunk);
+                    await LoadChunkAsync(chunk);
                     LoadedChunks.Add(chunk);
+                }
+
+                if (!sentLook && chunk == center)
+                {
+                    await Client.SendPacketAsync(new PlayerPositionAndLook
+                    {
+                        X = Position.X,
+                        Y = Position.Y,
+                        Z = Position.Z,
+                        TeleportId = 9
+                    });
+                    sentLook = true;
                 }
             }
 
-            if(!sentLook)
+            var unloadList = LoadedChunks.FindAll(c => !nearby.Contains(c));
+            foreach(var chunk in unloadList)
             {
-                _ = Client.SendPacketAsync(new PlayerPositionAndLook
-                {
-                    X = Position.X,
-                    Y = Position.Y,
-                    Z = Position.Z
-                });
-                sentLook = true;
+                LoadedChunks.Remove(chunk);
+                await UnloadChunkAsync(chunk);
             }
+        }
+        #endregion
+
+        public override void Tick()
+        {
+            UpdateChunks().GetAwaiter().GetResult();
         }
 
         public async Task LoadChunkAsync(Chunk chunk)
         {
             await Client.SendPacketAsync(new ChunkDataPacket
+            {
+                Chunk = chunk
+            });
+        }
+
+        public async Task UnloadChunkAsync(Chunk chunk)
+        {
+            await Client.SendPacketAsync(new UnloadChunkPacket
             {
                 Chunk = chunk
             });

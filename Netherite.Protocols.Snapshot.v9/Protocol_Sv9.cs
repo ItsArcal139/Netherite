@@ -127,6 +127,8 @@ namespace Netherite.Protocols.Snapshot.v9
                 writer.Flush(0x02);
             });
 
+            // 1.17 adds vibration mechanics in the game.
+            // This is something NEW!!
             RegisterOutgoing<SculkVibrationSignal>((p, writer) =>
             {
                 writer.WriteLongPos(p.Source);
@@ -142,6 +144,15 @@ namespace Netherite.Protocols.Snapshot.v9
                 }
 
                 writer.Flush(0x05);
+            });
+
+            // All the packet ID are shifted by 1 after ID 0x5.
+
+            RegisterOutgoing<BlockChange>((p, writer) =>
+            {
+                writer.WriteLongPos(p.Position);
+                writer.WriteVarInt(Registry.IdState.Find(t => t.Item2 == p.State.ToString()).Item1);
+                writer.Flush(0x0c);
             });
 
             RegisterOutgoing<ChatPacket>((p, writer) =>
@@ -175,6 +186,13 @@ namespace Netherite.Protocols.Snapshot.v9
             {
                 writer.WriteChat(p.Reason);
                 writer.Flush(0x1a);
+            });
+
+            RegisterOutgoing<UnloadChunkPacket>((p, writer) =>
+            {
+                writer.WriteInt(p.Chunk.X);
+                writer.WriteInt(p.Chunk.Z);
+                writer.Flush(0x1d);
             });
 
             RegisterOutgoing<KeepAlivePacket>((p, writer) =>

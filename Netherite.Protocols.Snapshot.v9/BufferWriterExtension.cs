@@ -1,6 +1,8 @@
 ﻿using Netherite.Blocks;
+using Netherite.Data.Nbt;
 using Netherite.Nbt;
 using Netherite.Net.IO;
+using Netherite.Utils;
 using Netherite.Worlds;
 using System;
 using System.Collections.Generic;
@@ -18,17 +20,16 @@ namespace Netherite.Protocols.Snapshot.v9
 
             int mask = 0;
             BufferWriter col = new BufferWriter();
-            int count = 0;
             foreach(var section in chunk.Sections)
             {
-                if(section.Count != 0)
+                if(section != null && section.Count != 0)
                 {
                     mask |= (int)section.YFlag;
                     col.WriteChunkSection(section);
-                    count++;
                 }
             }
             writer.WriteVarInt(mask);
+            Logger.Log("" + mask);
 
             NbtCompound heightmap = new NbtCompound();
             heightmap.Name = "";
@@ -48,16 +49,6 @@ namespace Netherite.Protocols.Snapshot.v9
 
             // Block entities
             writer.WriteVarInt(0);
-
-            if(mask != 1)
-            {
-                byte[] buf2 = writer.ToBuffer();
-                foreach(var b in buf2)
-                {
-                    writer.WriteByte(b);
-                }
-                File.WriteAllBytes("chunkdata.bin", buf2);
-            }
         }
 
         private static int GetArrayLength(int bit)
@@ -87,8 +78,10 @@ namespace Netherite.Protocols.Snapshot.v9
 
             if (bitsPerBlock > 8)
             {
-                bitsPerBlock = 14;
+                bitsPerBlock = 15;
             }
+
+            bitsPerBlock = 15;
 
             writer.WriteShort(section.Count);
             writer.WriteByte(bitsPerBlock);

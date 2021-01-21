@@ -12,6 +12,8 @@ namespace Netherite.Net.Packets.Play.Serverbound
 
         public override async Task HandleAsync(Server server, Player player)
         {
+            if (!player.Client.ReadyForTick) return;
+
             player.Yaw = Yaw;
             player.Pitch = Pitch;
 
