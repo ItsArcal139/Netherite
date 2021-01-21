@@ -1,4 +1,6 @@
 ﻿using Netherite.Net.Protocols;
+using Netherite.Texts;
+using Netherite.Utils;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -12,7 +14,8 @@ namespace Netherite.Net
     public class NetworkManager
     {
         private Socket socket;
-        private int Port { get; set; }
+
+        public int Port { get; private set; }
 
         private CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -27,20 +30,42 @@ namespace Netherite.Net
 
             // Create a new socket and listen it.
             socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            socket.Bind(new IPEndPoint(IPAddress.Any, port));
-            socket.Listen(0);
+
+            try
+            {
+                socket.Bind(new IPEndPoint(IPAddress.Any, port));
+                socket.Listen(0);
+            } catch(SocketException ex)
+            {
+                Logger.Error(
+                    LiteralText.Of("Error whilist initiating Netherite: ")
+                        .AddExtra(LiteralText.Of(ex.Message).SetColor(TextColor.Red)));
+                Logger.Error(LiteralText.Of("Netherite will now quit."));
+                Environment.Exit(0);
+            }
+
+            Logger.Info(LiteralText.Of($"Listening on port {port}"));
 
             Protocol.EnsureLoad();
             ProtocolLoader.LoadProtocols();
         }
-        
+
         public void Stop()
         {
             StopAccepting();
-            foreach(var p in Server.OnlinePlayers)
+            List<Task> tasks = new List<Task>();
+            foreach (var p in Server.OnlinePlayers)
             {
-                p.Client.DisconnectAsync("Server stopping");
+                tasks.Add(p.Client.DisconnectAsync(
+                    TranslateText.Of("[Netherite] %s")
+                        .AddWith(
+                            LiteralText.Of("Server stopping.")
+                        )));
             }
+
+            Task.WaitAll(tasks.ToArray());
+            socket.Close();
+            socket.Dispose();
         }
 
         private void StopAccepting()
@@ -50,7 +75,8 @@ namespace Netherite.Net
 
         public void StartLoop()
         {
-            Task.Run(async () => {
+            Task.Run(async () =>
+            {
                 while (!cts.IsCancellationRequested)
                 {
                     Socket s = await socket.AcceptAsync();
@@ -59,7 +85,6 @@ namespace Netherite.Net
                     {
                         Connections.Remove(conn);
                     };
-
                     conn.StartLoop();
                     Connections.Add(conn);
                 }

@@ -23,7 +23,7 @@ namespace Netherite.Protocols.v754
     {
         public override int Version => 754;
 
-        public override string VersionName => "1.16.4";
+        public override string VersionName => "1.16.4, 1.16.5";
 
         static Protocol_v754()
         {
@@ -332,6 +332,13 @@ namespace Netherite.Protocols.v754
                 writer.WriteVarInt(p.ChunkX);
                 writer.WriteVarInt(p.ChunkZ);
                 writer.Flush(0x40);
+            });
+
+            RegisterOutgoing<TimeUpdate>((p, writer) =>
+            {
+                writer.WriteLong(p.WorldAge);
+                writer.WriteLong(p.WorldTime);
+                writer.Flush(0x4e);
             });
 
             #endregion

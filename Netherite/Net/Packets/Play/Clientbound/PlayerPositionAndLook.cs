@@ -17,5 +17,7 @@ namespace Netherite.Net.Packets.Play.Clientbound
         public byte RelationFlags { get; set; }
 
         public int TeleportId { get; set; }
+
+        public override bool IsConstantPacket => true;
     }
 }

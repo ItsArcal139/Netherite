@@ -23,9 +23,7 @@ namespace Netherite.Protocols.Snapshot.v9
         static Protocol_Sv9()
         {
             Register(0x40000009, new Protocol_Sv9());
-            Logger.Info(
-                 LiteralText.Of("Loading block states for 20w51a...")
-                 );
+            Logger.Info("Loading block states for 20w51a...");
             Registry.EnsureLoad();
         }
 

@@ -2,6 +2,7 @@
 using Netherite.Blocks;
 using Netherite.Data.Nbt;
 using Netherite.Net.Protocols;
+using Netherite.Utils;
 using Netherite.Worlds.Biomes;
 using System;
 using System.Collections.Generic;
@@ -109,8 +110,8 @@ namespace Netherite.Worlds
 
         public ChunkSection GetChunkSectionByPosY(int y)
         {
-            if (y > 256) throw new ArgumentException("y cannot be more than 256");
-            if (y < 0) throw new ArgumentException("y cannot be less than 0");
+            Preconditions.IsPositive(y, "y");
+            Preconditions.Ensure(y <= 256, "y cannot be more than 256.");
 
             int index = (int)Math.Floor((double)y / 16);
             if(Sections[index] == null)

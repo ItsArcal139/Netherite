@@ -8,5 +8,7 @@ namespace Netherite.Net.Packets.Play.Clientbound
         public float Yaw { get; set; }
         public float Pitch { get; set; }
         public bool OnGround { get; set; }
+
+        public override bool IsConstantPacket => true;
     }
 }

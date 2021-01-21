@@ -9,11 +9,15 @@ using Netherite.Worlds;
 using Newtonsoft.Json;
 using System.IO;
 using System.Threading;
+using Netherite.Texts;
+using Netherite.Utils;
 
 namespace Netherite
 {
     public class Server
     {
+        private readonly CancellationTokenSource cts = new CancellationTokenSource();
+
         public Registry Registry { get; private set; }
 
         public NetworkManager NetworkManager { get; internal set; }
@@ -23,8 +27,6 @@ namespace Netherite
         public List<World> Worlds { get; private set; } = new List<World>();
 
         public bool OnlineMode => Config.OnlineMode;
-
-        private CancellationTokenSource cts = new CancellationTokenSource();
 
         public int Port => Config.Port;
 
@@ -53,7 +55,13 @@ namespace Netherite
 
             AppDomain.CurrentDomain.ProcessExit += (o, e) =>
             {
-                this.Stop();
+                Stop();
+            };
+
+            Console.CancelKeyPress += (o, e) =>
+            {
+                e.Cancel = true;
+                Stop();
             };
         }
 
@@ -61,11 +69,11 @@ namespace Netherite
         {
             get
             {
-                var connections = NetworkManager.Connections.ToList();
-                connections.RemoveAll(c => !c.Connected || !c.ReadyForTick);
+                var result = NetworkManager.Connections.ToList().FindAll(c =>
+                {
+                    return c.Connected && c.CurrentState == PacketState.Play;
+                }).ConvertAll(a => a.Player).FindAll(a => a != null);
 
-                var result = connections.ConvertAll(a => a.Player);
-                result.RemoveAll(a => a == null);
                 return result;
             }
         }
@@ -77,9 +85,9 @@ namespace Netherite
         internal async Task BroadcastPacket(Packet packet)
         {
             List<Task> tasks = new List<Task>();
-            foreach (var conn in NetworkManager.Connections)
+            foreach (var player in OnlinePlayers)
             {
-                tasks.Add(conn.SendPacketAsync(packet));
+                tasks.Add(player.Client.SendPacketAsync(packet));
             }
             await Task.WhenAll(tasks);
         }
@@ -100,12 +108,12 @@ namespace Netherite
 
         public void Tick()
         {
-            foreach(var world in Worlds)
+            foreach (var world in Worlds)
             {
                 world.Tick();
             }
 
-            foreach(var player in OnlinePlayers)
+            foreach (var player in OnlinePlayers)
             {
                 player.Tick();
             }
@@ -117,10 +125,32 @@ namespace Netherite
             File.WriteAllText(Config.FilePath, content);
         }
 
+        private bool stopped = false;
+
         public void Stop()
         {
-            cts.Cancel();
-            SaveConfig();
+            if (!stopped)
+            {
+                Logger.Info(LiteralText.Of("Stopping Netherite..."));
+                cts.Cancel();
+                NetworkManager.Stop();
+                string content = JsonConvert.SerializeObject(Config);
+                File.WriteAllText("config.json", content);
+                stopped = true;
+            }
+        }
+
+        public async Task WaitForStopAsync()
+        {
+            while (!stopped)
+            {
+                await Task.Delay(100);
+            }
+        }
+
+        public void DispatchCommand(string command)
+        {
+            Logger.Info("Console issued a command: " + command);
         }
     }
 }

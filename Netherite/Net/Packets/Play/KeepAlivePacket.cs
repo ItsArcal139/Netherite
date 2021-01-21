@@ -4,6 +4,8 @@
     {
         public long Payload { get; set; }
 
+        public override bool IsConstantPacket => true;
+
         public KeepAlivePacket(long payload) : base()
         {
             Payload = payload;

@@ -8,6 +8,6 @@ namespace Netherite.Protocols.v754
 {
     public partial class Registry
     {
-        public static void EnsureLoad() { }
+        public static void EnsureLoad() { } 
     }
 }

@@ -1,8 +1,10 @@
 ﻿using Netherite.Auth;
 using Netherite.Net;
+using Netherite.Net.Packets;
 using Netherite.Net.Packets.Play.Clientbound;
 using Netherite.Physics;
 using Netherite.Texts;
+using Netherite.Utils;
 using Netherite.Worlds;
 using System;
 using System.Collections.Generic;
@@ -175,6 +177,8 @@ namespace Netherite.Entities
             if (lastChunk == null)
             {
                 lastChunk = center;
+                _ = LoadChunkAsync(center);
+                LoadedChunks.Add(center);
             }
             else
             {
@@ -229,7 +233,8 @@ namespace Netherite.Entities
             await Client.SendPacketAsync(new ChunkDataPacket
             {
                 Chunk = chunk
-            });
+            }, Client.CancelTokenSource);
+            await Task.Delay(5);
         }
 
         public async Task UnloadChunkAsync(Chunk chunk)

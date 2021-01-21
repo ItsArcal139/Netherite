@@ -10,6 +10,8 @@ namespace Netherite.Net.Packets.Play.Serverbound
         public float Pitch { get; set; }
         public bool OnGround { get; set; }
 
+        public override bool IsConstantPacket => true;
+
         public override async Task HandleAsync(Server server, Player player)
         {
             if (!player.Client.ReadyForTick) return;

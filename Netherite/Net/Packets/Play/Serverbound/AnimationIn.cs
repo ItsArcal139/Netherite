@@ -10,6 +10,8 @@ namespace Netherite.Net.Packets.Play
 {
     public class AnimationIn : Packet
     {
+        public override bool IsConstantPacket => true;
+
         public override async Task HandleAsync(Server server, Player player)
         {
             foreach(var p in server.OnlinePlayers)
