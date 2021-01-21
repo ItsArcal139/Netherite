@@ -16,6 +16,8 @@ namespace Netherite.Net.Packets.Play.Serverbound
 
         public bool OnGround { get; set; }
 
+        public override bool IsConstantPacket => true;
+
         public override async Task HandleAsync(Server server, Player player)
         {
             Vector3 newPos = new Vector3(X, Y, Z);

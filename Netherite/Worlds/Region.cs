@@ -12,6 +12,8 @@ namespace Netherite.Worlds
 {
     public class Region : IDisposable
     {
+        private static bool warnedUnstable = false;
+
         public const int LatestStableDataVersion = 2584;
 
         public int DataVersion { get; private set; }
@@ -104,9 +106,12 @@ namespace Netherite.Worlds
 
             NbtCompound c = (NbtCompound)NbtTag.Deserialize(chunk, ref i, true);
             DataVersion = ((NbtInt)c["DataVersion"]).Value;
-            if (DataVersion > LatestStableDataVersion)
+            if (DataVersion > LatestStableDataVersion && !warnedUnstable)
             {
-                Logger.Warn("You are loading a preview version world. This is not supported.");
+                warnedUnstable = true;
+                Logger.Warn("*** You are loading a newer world. ***");
+                Logger.Warn("Although the original world will not be changed, the world data");
+                Logger.Warn("processed by Netherite could be corrupted. This is not supported.");
             }
 
             // File.WriteAllBytes(fs.Name + $"({chunkX},{chunkZ}).nbt", NbtConvert.SerializeToBuffer(c));

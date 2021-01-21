@@ -1,8 +1,10 @@
 ﻿using Netherite.Auth;
 using Netherite.Net;
+using Netherite.Net.Packets;
 using Netherite.Net.Packets.Play.Clientbound;
 using Netherite.Physics;
 using Netherite.Texts;
+using Netherite.Utils;
 using Netherite.Worlds;
 using System;
 using System.Collections.Generic;
@@ -129,7 +131,9 @@ namespace Netherite.Entities
 
         private bool sentLook = false;
 
-        public override void Tick()
+        private bool startedChunkTask = false;
+
+        private void TickNearbyChunks()
         {
             List<Chunk> nearby = new List<Chunk>();
             Chunk center = World.GetChunkByBlockPos((int)Position.X, (int)Position.Z);
@@ -152,12 +156,15 @@ namespace Netherite.Entities
                 }
             }
 
-            if(lastChunk == null)
+            if (lastChunk == null)
             {
                 lastChunk = center;
-            } else
+                _ = LoadChunkAsync(center);
+                LoadedChunks.Add(center);
+            }
+            else
             {
-                if(lastChunk != center)
+                if (lastChunk != center)
                 {
                     _ = Client.SendPacketAsync(new ViewPosition
                     {
@@ -168,16 +175,7 @@ namespace Netherite.Entities
                 }
             }
 
-            foreach (var chunk in nearby)
-            {
-                if (!LoadedChunks.Contains(chunk))
-                {
-                    _ = LoadChunkAsync(chunk);
-                    LoadedChunks.Add(chunk);
-                }
-            }
-
-            if(!sentLook)
+            if (!sentLook)
             {
                 _ = Client.SendPacketAsync(new PlayerPositionAndLook
                 {
@@ -187,6 +185,36 @@ namespace Netherite.Entities
                 });
                 sentLook = true;
             }
+
+            foreach (var chunk in nearby)
+            {
+                if (!LoadedChunks.Contains(chunk))
+                {
+                    LoadedChunks.Add(chunk);
+                    LoadChunkAsync(chunk).GetAwaiter().GetResult();
+                }
+            }
+        }
+
+        public override void Tick()
+        {
+            _ = Client.SendPacketAsync(new TimeUpdate
+            {
+                WorldAge = World.Time,
+                WorldTime = World.Time
+            });
+
+            if (!startedChunkTask)
+            {
+                startedChunkTask = true;
+                Task.Run(() =>
+                {
+                    while (Client.Connected)
+                    {
+                        TickNearbyChunks();
+                    }
+                });
+            }
         }
 
         public async Task LoadChunkAsync(Chunk chunk)
@@ -194,7 +222,8 @@ namespace Netherite.Entities
             await Client.SendPacketAsync(new ChunkDataPacket
             {
                 Chunk = chunk
-            });
+            }, Client.CancelTokenSource);
+            await Task.Delay(5);
         }
     }
 }

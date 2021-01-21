@@ -17,8 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netherite.Protocols.v47", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netherite.Generator", "Netherite.Generator\Netherite.Generator.csproj", "{AD1AB915-C294-4C9D-A6D2-6A1332E23C20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BouncyCastle", "crypto\BouncyCastle.csproj", "{4C235092-820C-4DEB-9074-D356FB797D8B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4A4ADC0B-8B5C-4E65-9EF7-5048D6327B28}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -94,14 +92,6 @@ Global
 		{AD1AB915-C294-4C9D-A6D2-6A1332E23C20}.DebugPacket|Any CPU.Build.0 = Debug Packet|Any CPU
 		{AD1AB915-C294-4C9D-A6D2-6A1332E23C20}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD1AB915-C294-4C9D-A6D2-6A1332E23C20}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.Debug Packet|Any CPU.ActiveCfg = Debug|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.Debug Packet|Any CPU.Build.0 = Debug|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.DebugPacket|Any CPU.ActiveCfg = Debug|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.DebugPacket|Any CPU.Build.0 = Debug|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4C235092-820C-4DEB-9074-D356FB797D8B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{65AFB601-3832-41AF-9BCE-4A15C53AE6B2}.Debug Packet|Any CPU.ActiveCfg = Debug|Any CPU
 		{65AFB601-3832-41AF-9BCE-4A15C53AE6B2}.Debug Packet|Any CPU.Build.0 = Debug|Any CPU
 		{65AFB601-3832-41AF-9BCE-4A15C53AE6B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

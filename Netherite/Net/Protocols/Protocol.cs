@@ -33,7 +33,7 @@ namespace Netherite.Net.Protocols
 
         static Protocol()
         {
-            DefaultProtocol.EnsureLoad();
+            FallbackProtocol.EnsureLoad();
         }
 
         public ICollection<Protocol> LoadedProtocols => protocols.Values;
@@ -148,7 +148,7 @@ namespace Netherite.Net.Protocols
         {
             protocols.Add(version, protocol);
             protocolTypes.Add(typeof(T), version);
-            Logger.Info(
+            Logger.Log(
                 TranslateText.Of("Registered protocol {0}")
                     .AddWith(Text.RepresentType(typeof(T))));
         }

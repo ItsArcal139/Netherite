@@ -1,9 +1,11 @@
 ﻿using Netherite.Data.Entities;
 using Netherite.Nbt;
+using Netherite.Texts;
 using Netherite.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 
 namespace Netherite.Worlds.Biomes
@@ -140,7 +142,10 @@ namespace Netherite.Worlds.Biomes
 
         static Biome()
         {
-            byte[] b = File.ReadAllBytes("dimensions.nbt");
+            Stream s = Assembly.GetAssembly(typeof(Biome)).GetManifestResourceStream("Netherite.Resources.dimensions.nbt");
+            byte[] b = new byte[s.Length];
+            s.Read(b, 0, b.Length);
+
             byte[] r = GZipUtils.Decompress(b);
             int index = 0;
             NbtCompound c = (NbtCompound)NbtTag.Deserialize(r, ref index, true);

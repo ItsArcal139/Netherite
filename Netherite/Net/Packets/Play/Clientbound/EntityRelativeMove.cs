@@ -8,5 +8,7 @@ namespace Netherite.Net.Packets.Play.Clientbound
         public Entity Entity { get; set; }
         public Vector3 Delta { get; set; }
         public bool OnGround { get; set; }
+
+        public override bool IsConstantPacket => true;
     }
 }

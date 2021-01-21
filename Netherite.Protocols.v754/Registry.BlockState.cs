@@ -7,7 +7,7 @@ namespace Netherite.Protocols.v754
     {
         public static List<(int, string)> IdState = new List<(int, string)>();
 
-        private static void IdStateMapping()
+        static Registry()
         {
             IdState.Add((0, "minecraft:air"));
             IdState.Add((1, "minecraft:stone"));

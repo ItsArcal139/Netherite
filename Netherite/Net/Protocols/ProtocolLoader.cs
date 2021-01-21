@@ -37,28 +37,37 @@ namespace Netherite.Net.Protocols
                 Directory.CreateDirectory("Protocols");
             }
 
+            List<Task> loadTasks = new List<Task>();
+
             string[] files = Directory.GetFiles("Protocols");
             foreach (string file in files)
             {
                 if (file.ToLower().EndsWith(".dll"))
                 {
-                    string path = Directory.GetCurrentDirectory() + "\\" + file;
-                    Assembly asm = context.LoadFromAssemblyPath(path);
-                    foreach (Type t in asm.GetTypes())
+                    loadTasks.Add(Task.Run(() =>
                     {
-                        if (typeof(Protocol).IsAssignableFrom(t))
+                        string path = Directory.GetCurrentDirectory() + "\\" + file;
+                        Assembly asm = context.LoadFromAssemblyPath(path);
+                        foreach (Type t in asm.GetTypes())
                         {
-                            RuntimeHelpers.RunClassConstructor(t.TypeHandle);
-                            protocols.Add(t);
+                            if (typeof(Protocol).IsAssignableFrom(t))
+                            {
+                                RuntimeHelpers.RunClassConstructor(t.TypeHandle);
+                                protocols.Add(t);
+                            }
                         }
-                    }
+                    }));
                 }
             }
+
+            Task.WaitAll(loadTasks.ToArray());
+            Logger.Info(LiteralText.Of(protocols.Count + " protocols has been loaded."));
         }
 
         public async static Task LoadProtocolsAsync()
         {
-            await Task.Run(async () => {
+            await Task.Run(async () =>
+            {
                 await contextLock.WaitAsync();
                 try
                 {

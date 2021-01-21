@@ -10,6 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\dimensions.nbt" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
@@ -19,8 +22,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\crypto\BouncyCastle.csproj" />
     <ProjectReference Include="..\Netherite.Nbt\Netherite.Nbt.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Resources\dimensions.nbt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\dimensions.nbt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="BouncyCastle">
+      <HintPath>..\BouncyCastle.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

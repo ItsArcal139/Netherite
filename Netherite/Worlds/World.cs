@@ -2,12 +2,17 @@
 using Netherite.Blocks;
 using Netherite.Data.Entities;
 using Netherite.Entities;
+using Netherite.Nbt;
+using Netherite.Nbt.Serializations;
+using Netherite.Utils;
 using Netherite.Worlds.Biomes;
 using Netherite.Worlds.Dimensions;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Netherite.Worlds
@@ -18,14 +23,84 @@ namespace Netherite.Worlds
 
         public Identifier Name { get; set; }
 
+        /// <summary>
+        /// The user-friendly level name in-game.
+        /// </summary>
+        public string LevelName { get; set; }
+
+        /// <summary>
+        /// The random seed of the world.
+        /// </summary>
         public long Seed { get; set; }
 
-        private Dictionary<(int, int), Region> regions = new Dictionary<(int, int), Region>();
+        /// <summary>
+        /// The list of loaded regions of the world.
+        /// </summary>
+        private readonly Dictionary<(int, int), Region> regions = new Dictionary<(int, int), Region>();
 
+        /// <summary>
+        /// The root directory path of the world.
+        /// </summary>
         public string Path { get; set; }
 
+        /// <summary>
+        /// The time of the world.
+        /// </summary>
+        public long Time { get; set; } = 0;
+
+        /// <summary>
+        /// The game version of the world.
+        /// </summary>
+        public GameVersion Version { get; set; }
+
+        public World(string path)
+        {
+            Path = path;
+            ReadLevelFile();
+        }
+
+        /// <summary>
+        /// Reads level.dat and stores level informations.
+        /// </summary>
+        private void ReadLevelFile()
+        {
+            Logger.Log($"Reading level.dat from world folder \"{Path}\"...");
+
+            byte[] buffer = GZipUtils.Decompress(File.ReadAllBytes($"{Path}/level.dat"));
+            NbtCompound data = (NbtCompound)((NbtCompound)NbtTag.Deserialize(buffer, true))["Data"];
+
+            Version = NbtConvert.Deserialize<GameVersion>(data["Version"]);
+            Logger.Log($"Version: {Version.Name} ({Version.DataVersion})" + (Version.IsSnapshot ? ", Snapshot" : ""));
+
+            LevelName = ((NbtString)data["LevelName"]).ToValue();
+            Logger.Log($"Level name: {LevelName}");
+
+            // Seed value location is changed since 1.16
+            if (Version.DataVersion < 2566)
+            {
+                // Seed is saved under $.RandomSeed
+                Seed = ((NbtLong)data["RandomSeed"]).Value;
+            }
+            else
+            {
+                // Seed is saved under $.WorldGenSettings.seed
+                Seed = ((NbtLong)((NbtCompound)data["WorldGenSettings"])["seed"]).Value;
+            }
+            Logger.Log($"Seed: {Seed}");
+        }
+
+        private SemaphoreSlim dictLock = new SemaphoreSlim(1, 1);
+
+        /// <summary>
+        /// Get a region by a specified block position.
+        /// </summary>
+        /// <param name="blockX">The X value in blocks.</param>
+        /// <param name="blockZ">The Z value in blocks.</param>
+        /// <returns>The region at the specified position.</returns>
         public Region GetRegion(int blockX, int blockZ)
         {
+            dictLock.Wait();
+
             int rx = (int)Math.Floor((double)blockX / 512);
             int rz = (int)Math.Floor((double)blockZ / 512);
 
@@ -33,13 +108,30 @@ namespace Netherite.Worlds
             {
                 var r = Region.FromFile($"{Path}/region/r.{rx}.{rz}.mca", this, rx, rz);
                 regions.Add((rx, rz), r);
+                dictLock.Release();
                 return r;
-            } else
+            }
+            else
             {
+                dictLock.Release();
                 return regions[(rx, rz)];
             }
         }
 
+        public async Task<Region> GetRegionAsync(int blockX, int blockZ)
+        {
+            return await Task.Run(() =>
+            {
+                return GetRegion(blockX, blockZ);
+            });
+        }
+
+        /// <summary>
+        /// Get a chunk by its X and Z position.
+        /// </summary>
+        /// <param name="chunkX">The X value in chunks.</param>
+        /// <param name="chunkZ">The Z value in chunks.</param>
+        /// <returns>The desired chunk.</returns>
         public Chunk GetChunk(int chunkX, int chunkZ)
         {
             var region = GetRegion(chunkX * 16, chunkZ * 16);
@@ -86,12 +178,6 @@ namespace Netherite.Worlds
             return chunk.GetBiome(blockX - cx * 16, y, blockZ - cz * 16);
         }
 
-        public World(string path)
-        {
-            Path = path;
-            GetChunk(0, 0);
-        }
-
         public Block GetBlock(int x, int y, int z) => GetChunkByBlockPos(x, z).GetBlock(x % 16, y, z % 16);
 
         public void SetBlock(int x, int y, int z, BlockState b) => GetChunkByBlockPos(x, z).SetBlock(x % 16, y, z % 16, b);
@@ -102,7 +188,8 @@ namespace Netherite.Worlds
 
         public void Tick()
         {
-            foreach(var entity in Entities)
+            Time++;
+            foreach (var entity in Entities)
             {
                 entity.Tick();
             }

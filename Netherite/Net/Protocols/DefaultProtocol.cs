@@ -1,17 +1,17 @@
 ﻿namespace Netherite.Net.Protocols
 {
-    public class DefaultProtocol : Protocol
+    public class FallbackProtocol : Protocol
     {
         public override int Version => -1;
 
-        public override string VersionName => "Pre-login";
+        public override string VersionName => "Fallback";
 
-        static DefaultProtocol()
+        static FallbackProtocol()
         {
-            Register(-1, new DefaultProtocol());
+            Register(-1, new FallbackProtocol());
         }
 
-        internal DefaultProtocol()
+        internal FallbackProtocol()
         {
             RegisterDefaults();
         }

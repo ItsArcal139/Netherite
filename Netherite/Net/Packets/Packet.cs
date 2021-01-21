@@ -15,10 +15,10 @@ namespace Netherite.Net.Packets
     {
         protected Packet() { }
 
-        internal static void EnsureLoaded()
-        {
+        // Call this method to make sure the static constructor is executed
+        internal static void EnsureLoaded() { }
 
-        }
+        public virtual bool IsConstantPacket => false;
 
         public virtual Task HandleAsync(Server server, Player player) => Task.CompletedTask;
     }
@@ -34,7 +34,7 @@ namespace Netherite.Net.Packets
                     LiteralText.Of($"{b:x2} ")
                 );
             }
-            Logger.LogPacket(text);
+            Logger.Verbose(text);
         }
     }
 

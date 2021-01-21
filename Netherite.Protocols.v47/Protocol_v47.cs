@@ -222,6 +222,13 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x02);
             });
 
+            RegisterOutgoing<TimeUpdate>((p, writer) =>
+            {
+                writer.WriteLong(p.WorldAge);
+                writer.WriteLong(p.WorldTime);
+                writer.Flush(0x03);
+            });
+
             RegisterOutgoing<PerformRespawn>((p, writer) =>
             {
                 writer.WriteInt(p.Dimension);

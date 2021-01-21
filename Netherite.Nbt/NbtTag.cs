@@ -21,6 +21,12 @@ namespace Netherite.Nbt
             RawType = b;
         }
 
+        public static NbtTag Deserialize(byte[] buffer, bool named = false, TagType? type = null)
+        {
+            int index = 0;
+            return Deserialize(buffer, ref index, named, type);
+        }
+
         public static NbtTag Deserialize(byte[] buffer, ref int index, bool named = false, TagType? type = null)
         {
             switch (type ?? (TagType)NbtIO.ReadByte(buffer, ref index))
