@@ -1,4 +1,6 @@
-﻿namespace Netherite.Net.Packets.Login.Clientbound
+﻿using System.Threading.Tasks;
+
+namespace Netherite.Net.Packets.Login.Clientbound
 {
     public class EncryptionRequest : Packet
     {
@@ -15,6 +17,13 @@
             ServerID = serverId;
             PublicKey = publicKey;
             VerifyToken = verifyToken;
+        }
+
+        public override async Task ClientHandleAsync(ServerConnection connection)
+        {
+            // For now we just disconnect from the server,
+            // because we have currently no access to the access token
+            await connection.DisconnectAsync();
         }
     }
 }

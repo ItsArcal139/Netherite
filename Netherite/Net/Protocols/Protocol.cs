@@ -19,14 +19,24 @@ using System.Threading.Tasks;
 
 namespace Netherite.Net.Protocols
 {
+    public enum ProtocolRole
+    {
+        Server, Client
+    }
+
     public abstract class Protocol
     {
-        private Dictionary<int, Func<BufferReader, Packet>> handshakeInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> statusInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> loginInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> playInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<int, Func<BufferReader, Packet>> serverHandshakeInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<int, Func<BufferReader, Packet>> serverStatusInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<int, Func<BufferReader, Packet>> serverLoginInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<int, Func<BufferReader, Packet>> serverPlayInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<Type, Action<Packet, BufferWriter>> serverOutHandlers = new Dictionary<Type, Action<Packet, BufferWriter>>();
 
-        private Dictionary<Type, Action<Packet, BufferWriter>> outHandlers = new Dictionary<Type, Action<Packet, BufferWriter>>();
+        private Dictionary<int, Func<BufferReader, Packet>> clientHandshakeInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<int, Func<BufferReader, Packet>> clientStatusInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<int, Func<BufferReader, Packet>> clientLoginInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<int, Func<BufferReader, Packet>> clientPlayInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
+        private Dictionary<Type, Action<Packet, BufferWriter>> clientOutHandlers = new Dictionary<Type, Action<Packet, BufferWriter>>();
 
         private static Dictionary<int, Protocol> protocols = new Dictionary<int, Protocol>();
         private static Dictionary<Type, int> protocolTypes = new Dictionary<Type, int>();
@@ -44,7 +54,7 @@ namespace Netherite.Net.Protocols
 
         internal static void EnsureLoad() { }
 
-        public Packet Read(PacketState state, BufferReader reader)
+        public Packet Read(ProtocolRole type, PacketState state, BufferReader reader)
         {
             int id = reader.ReadVarInt();
 
@@ -52,26 +62,26 @@ namespace Netherite.Net.Protocols
             switch (state)
             {
                 case PacketState.Handshake:
-                    map = handshakeInHandlers;
+                    map = type == ProtocolRole.Server ? serverHandshakeInHandlers : clientHandshakeInHandlers;
                     break;
                 case PacketState.Status:
-                    map = statusInHandlers;
+                    map = type == ProtocolRole.Server ? serverStatusInHandlers : clientStatusInHandlers;
                     break;
                 case PacketState.Login:
-                    map = loginInHandlers;
+                    map = type == ProtocolRole.Server ? serverLoginInHandlers : clientLoginInHandlers;
                     break;
                 case PacketState.Play:
-                    map = playInHandlers;
+                    map = type == ProtocolRole.Server ? serverPlayInHandlers : clientPlayInHandlers;
                     break;
                 default:
                     throw new ArgumentException($"Unknown state {state}");
             }
 
-            if(!map.ContainsKey(id))
+            if (!map.ContainsKey(id))
             {
                 Logger.Warn(
                     TranslateText.Of("Incoming packet {0} in protocol {1} not registered")
-                        .AddWith(LiteralText.Of(id.ToString()).SetColor(TextColor.Gold))
+                        .AddWith(LiteralText.Of("0x" + id.ToString("x2")).SetColor(TextColor.Gold))
                         .AddWith(Text.RepresentType(GetType())));
                 return new UnknownPacket(reader.Buffer);
             }
@@ -80,12 +90,13 @@ namespace Netherite.Net.Protocols
             return handler(reader);
         }
 
-        public async Task Write(Packet packet, BufferWriter writer)
+        public async Task Write(ProtocolRole type, Packet packet, BufferWriter writer)
         {
             Type t = packet.GetType();
-            if (outHandlers.ContainsKey(t))
+            var handlers = type == ProtocolRole.Server ? serverOutHandlers : clientOutHandlers;
+            if (handlers.ContainsKey(t))
             {
-                Action<Packet, BufferWriter> handler = outHandlers[t];
+                Action<Packet, BufferWriter> handler = handlers[t];
                 await Task.Run(() =>
                 {
                     handler(packet, writer);
@@ -205,7 +216,7 @@ namespace Netherite.Net.Protocols
             }
         }
 
-        protected void RegisterIncoming<T>(PacketState state, int id, Func<BufferReader, T> handler) where T : Packet
+        protected void RegisterIncoming<T>(ProtocolRole type, PacketState state, int id, Func<BufferReader, T> handler) where T : Packet
         {
             Type t = typeof(T);
             CheckUsingPreview(t);
@@ -214,16 +225,16 @@ namespace Netherite.Net.Protocols
             switch (state)
             {
                 case PacketState.Handshake:
-                    map = handshakeInHandlers;
+                    map = type == ProtocolRole.Server ? serverHandshakeInHandlers : clientHandshakeInHandlers;
                     break;
                 case PacketState.Status:
-                    map = statusInHandlers;
+                    map = type == ProtocolRole.Server ? serverStatusInHandlers : clientStatusInHandlers;
                     break;
                 case PacketState.Login:
-                    map = loginInHandlers;
+                    map = type == ProtocolRole.Server ? serverLoginInHandlers : clientLoginInHandlers;
                     break;
                 case PacketState.Play:
-                    map = playInHandlers;
+                    map = type == ProtocolRole.Server ? serverPlayInHandlers : clientPlayInHandlers;
                     break;
                 default:
                     throw new ArgumentException("state is unknown");
@@ -234,12 +245,12 @@ namespace Netherite.Net.Protocols
 
         public delegate void OutgoingPacketHandler<T>(T packet, BufferWriter writer) where T : Packet;
 
-        protected void RegisterOutgoing<T>(OutgoingPacketHandler<T> handler) where T : Packet
+        protected void RegisterOutgoing<T>(ProtocolRole type, OutgoingPacketHandler<T> handler) where T : Packet
         {
             Type t = typeof(T);
             CheckUsingPreview(t);
 
-            outHandlers.Add(typeof(T), (p, writer) =>
+            (type == ProtocolRole.Server ? serverOutHandlers : clientOutHandlers).Add(typeof(T), (p, writer) =>
             {
                 // -- Why bother wrapping it...?
                 handler((T)p, writer);
@@ -248,7 +259,19 @@ namespace Netherite.Net.Protocols
 
         protected void RegisterDefaults()
         {
-            RegisterIncoming(PacketState.Handshake, 0x00, reader =>
+            if(Server.Instance != null)
+            {
+                RegisterServerDefaults();
+            } else
+            {
+                RegisterClientDefaults();
+            }
+        }
+
+        private void RegisterServerDefaults()
+        {
+            #region -- Server handlers --
+            RegisterIncoming(ProtocolRole.Server, PacketState.Handshake, 0x00, reader =>
             {
                 return new SetProtocol
                 {
@@ -259,12 +282,12 @@ namespace Netherite.Net.Protocols
                 };
             });
 
-            RegisterIncoming(PacketState.Status, 0x00, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Status, 0x00, reader =>
             {
                 return new StatusRequest();
             });
 
-            RegisterIncoming(PacketState.Status, 0x01, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Status, 0x01, reader =>
             {
                 return new PingPong
                 {
@@ -272,7 +295,7 @@ namespace Netherite.Net.Protocols
                 };
             });
 
-            RegisterIncoming(PacketState.Login, 0x00, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Login, 0x00, reader =>
             {
                 return new LoginStart
                 {
@@ -280,7 +303,7 @@ namespace Netherite.Net.Protocols
                 };
             });
 
-            RegisterIncoming(PacketState.Login, 0x01, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Login, 0x01, reader =>
             {
                 return new EncryptionResponse
                 {
@@ -289,23 +312,49 @@ namespace Netherite.Net.Protocols
                 };
             });
 
-            RegisterOutgoing<StatusResponse>((p, writer) =>
+            RegisterOutgoing<StatusResponse>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString(JsonConvert.SerializeObject(p.Response));
                 writer.Flush(0x00);
             });
 
-            RegisterOutgoing<PingPong>((p, writer) =>
+            RegisterOutgoing<PingPong>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLong(p.Payload);
                 writer.Flush(0x01);
             });
 
-            RegisterOutgoing<LoginKick>((p, writer) =>
+            RegisterOutgoing<LoginKick>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteChat(p.Reason);
                 writer.Flush(0x00);
             });
+            #endregion
+        }
+
+        private void RegisterClientDefaults()
+        {
+            #region -- Client handlers --
+            RegisterOutgoing<SetProtocol>(ProtocolRole.Client, (p, writer) =>
+            {
+                writer.WriteVarInt(p.ProtocolVersion);
+                writer.WriteString(p.ServerAddress);
+                writer.WriteShort(p.ServerPort);
+                writer.WriteVarInt((int)p.NextState);
+                writer.Flush(0x00);
+            });
+
+            RegisterOutgoing<StatusRequest>(ProtocolRole.Client, (p, writer) =>
+            {
+                writer.Flush(0x00);
+            });
+
+            RegisterOutgoing<LoginStart>(ProtocolRole.Client, (p, writer) =>
+            {
+                writer.WriteString(p.UserName);
+                writer.Flush(0x00);
+            });
+            #endregion
         }
     }
 }

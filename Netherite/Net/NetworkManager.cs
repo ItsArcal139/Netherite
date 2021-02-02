@@ -38,7 +38,7 @@ namespace Netherite.Net
             } catch(SocketException ex)
             {
                 Logger.Error(
-                    LiteralText.Of("Error whilist initiating Netherite: ")
+                    LiteralText.Of("Error whilist initiating Netherite server: ")
                         .AddExtra(LiteralText.Of(ex.Message).SetColor(TextColor.Red)));
                 Logger.Error(LiteralText.Of("Netherite will now quit."));
                 Environment.Exit(0);

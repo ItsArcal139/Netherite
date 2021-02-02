@@ -73,5 +73,80 @@ namespace Netherite.Utils.Mojang
 
             return null;
         }
+
+        public static async Task Join(string accessToken, string selectedProfile, string serverId)
+        {
+
+        }
+
+        private static Guid clientToken = Guid.NewGuid();
+
+        public static async Task Authenticate(string account, string password)
+        {
+            string token = clientToken.ToString();
+            AuthenticateRequest request = new AuthenticateRequest
+            {
+                UserName = account,
+                Password = password,
+                ClientToken = token
+            };
+
+            using (var response = await http.PostAsync("https://authserver.mojang.com/authenticate",
+                new StringContent(
+                    JsonConvert.SerializeObject(request),
+                    Encoding.UTF8, "application/json"
+                )
+            ))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    // Read the response
+                }
+            }
+        }
+    }
+
+    public class AuthenticateResponse
+    {
+
+    }
+
+    internal class AuthenticateRequest
+    {
+        internal class AgentData
+        {
+            [JsonProperty("name")]
+            internal string Name { get; set; } = "Minecraft";
+
+            [JsonProperty("version")]
+            internal int Version { get; set; } = 1;
+        }
+
+        [JsonProperty("agent")]
+        internal AgentData Agent { get; set; } = new AgentData();
+
+        [JsonProperty("username")]
+        internal string UserName { get; set; }
+
+        [JsonProperty("password")]
+        internal string Password { get; set; }
+
+        [JsonProperty("clientToken")]
+        internal string ClientToken { get; set; }
+
+        [JsonProperty("requestUser")]
+        internal bool RequestUser { get; set; } = true;
+    }
+
+    internal class JoinServerRequest
+    {
+        [JsonProperty("accessToken")]
+        internal string AccessToken { get; set; }
+
+        [JsonProperty("selectedProfile")]
+        internal string SelectedProfile { get; set; }
+
+        [JsonProperty("serverId")]
+        internal string ServerId { get; set; }
     }
 }

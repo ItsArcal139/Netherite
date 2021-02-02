@@ -5,6 +5,7 @@ namespace Netherite.Net.Packets.Play.Clientbound
 {
     public class EntityVelocityPacket : Packet
     {
+        public override bool IsConstantPacket => true;
         public Entity Entity { get; set; }
         public Vector3 Velocity { get; set; }
 

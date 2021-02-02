@@ -1,4 +1,6 @@
-﻿namespace Netherite.Net.Packets.Play
+﻿using System.Threading.Tasks;
+
+namespace Netherite.Net.Packets.Play
 {
     public class KeepAlivePacket : Packet
     {
@@ -9,6 +11,11 @@
         public KeepAlivePacket(long payload) : base()
         {
             Payload = payload;
+        }
+
+        public override async Task ClientHandleAsync(ServerConnection connection)
+        {
+            await connection.SendPacketAsync(this);
         }
     }
 }

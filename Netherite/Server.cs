@@ -144,7 +144,7 @@ namespace Netherite
         {
             while (!stopped)
             {
-                await Task.Delay(100);
+                await Task.Delay(1);
             }
         }
 

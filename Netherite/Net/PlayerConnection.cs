@@ -138,6 +138,17 @@ namespace Netherite.Net
         {
             if (!p.IsConstantPacket)
             {
+                Func<Text> b = () =>
+                {
+                    if (p is UnknownPacket up)
+                    {
+                        return TranslateText.Of(" [{0} bytes]").AddWith(
+                            LiteralText.Of(up.buffer.Length + "").SetColor(TextColor.DarkGray)
+                        ).SetColor(TextColor.DarkGray);
+                    }
+                    return LiteralText.Of("");
+                };
+
                 Logger.Verbose(
                     TranslateText.Of("{0} {1} ")
                         .AddWith(
@@ -151,7 +162,8 @@ namespace Netherite.Net
                                 LiteralText.Of(CurrentState.ToString() + ((byte)CurrentState > 0 ? "\t" : "")).SetColor(TextColor.Green),
                                 LiteralText.Of(p.GetType().Name).SetColor(TextColor.Gold)
                             )
-                        ));
+                        )
+                        .AddExtra(b()));
             }
             
             if (p is SetProtocol rp)
@@ -400,7 +412,7 @@ namespace Netherite.Net
                 Slot = 4
             });
 
-            await SendPlayerInfo();
+            // await SendPlayerInfo();
 
             Player.Position = new Vector3(280, Player.World.GetHighestBlockY(280, 28) + 1, 28);
 
@@ -607,7 +619,7 @@ namespace Netherite.Net
 
                     BufferReader packetReader = new BufferReader(raw);
 
-                    Packet p = Protocol.Read(CurrentState, packetReader);
+                    Packet p = Protocol.Read(ProtocolRole.Server, CurrentState, packetReader);
                     ReceivedPacket?.Invoke(p);
                     _ = p.HandleAsync(Server, Player);
                 }
@@ -650,7 +662,7 @@ namespace Netherite.Net
 
             try
             {
-                await Protocol.Write(packet, writer);
+                await Protocol.Write(ProtocolRole.Server, packet, writer);
                 byte[] buffer = writer.ToBuffer();
 
                 // Check the connection again

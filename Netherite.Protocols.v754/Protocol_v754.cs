@@ -3,15 +3,18 @@ using Netherite.Data.Entities;
 using Netherite.Entities;
 using Netherite.Nbt;
 using Netherite.Nbt.Serializations;
+using Netherite.Net.IO;
 using Netherite.Net.Packets;
 using Netherite.Net.Packets.Login.Clientbound;
 using Netherite.Net.Packets.Play;
 using Netherite.Net.Packets.Play.Clientbound;
 using Netherite.Net.Packets.Play.Serverbound;
 using Netherite.Net.Protocols;
+using Netherite.Physics;
 using Netherite.Texts;
 using Netherite.Utils;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,9 +42,21 @@ namespace Netherite.Protocols.v754
         {
             RegisterDefaults();
 
+            if (Server.Instance == null)
+            {
+                RegisterClientPackets();
+            }
+            else
+            {
+                RegisterServerPackets();
+            }
+        }
+
+        internal void RegisterServerPackets()
+        {
             #region ------ Incoming packets ------
 
-            RegisterIncoming(PacketState.Play, 0x03, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x03, reader =>
             {
                 return new PlayerChat
                 {
@@ -49,7 +64,7 @@ namespace Netherite.Protocols.v754
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x05, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x05, reader =>
             {
                 return new ClientSettingsPacket
                 {
@@ -62,7 +77,7 @@ namespace Netherite.Protocols.v754
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x0b, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x0b, reader =>
             {
                 return new PluginMessage
                 {
@@ -71,9 +86,9 @@ namespace Netherite.Protocols.v754
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x10, reader => new KeepAlivePacket(reader.ReadLong()));
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x10, reader => new KeepAlivePacket(reader.ReadLong()));
 
-            RegisterIncoming(PacketState.Play, 0x12, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x12, reader =>
             {
                 return new UpdatePlayerPosition
                 {
@@ -84,7 +99,7 @@ namespace Netherite.Protocols.v754
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x13, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x13, reader =>
             {
                 return new UpdatePlayerPositionAndLook
                 {
@@ -97,7 +112,7 @@ namespace Netherite.Protocols.v754
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x14, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x14, reader =>
             {
                 return new UpdatePlayerLook
                 {
@@ -107,7 +122,7 @@ namespace Netherite.Protocols.v754
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x15, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x15, reader =>
             {
                 return new PlayerOnGround
                 {
@@ -119,7 +134,7 @@ namespace Netherite.Protocols.v754
 
             #region ------ Outgoing packets ------
 
-            RegisterOutgoing<EncryptionRequest>((p, writer) =>
+            RegisterOutgoing<EncryptionRequest>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString(p.ServerID);
                 writer.WriteByteArray(p.PublicKey);
@@ -127,14 +142,14 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x01);
             });
 
-            RegisterOutgoing<LoginSuccess>((p, writer) =>
+            RegisterOutgoing<LoginSuccess>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteGuid(p.Guid);
                 writer.WriteString(p.UserName);
                 writer.Flush(0x02);
             });
 
-            RegisterOutgoing<SpawnEntity>((p, writer) =>
+            RegisterOutgoing<SpawnEntity>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
                 writer.WriteGuid(p.Entity.Guid);
@@ -151,7 +166,7 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x00);
             });
 
-            RegisterOutgoing<SpawnPlayer>((p, writer) =>
+            RegisterOutgoing<SpawnPlayer>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Player.Handle);
                 writer.WriteGuid(p.Player.Guid);
@@ -163,14 +178,14 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x04);
             });
 
-            RegisterOutgoing<BlockChange>((p, writer) =>
+            RegisterOutgoing<BlockChange>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLongPos(p.Position);
                 writer.WriteVarInt(Registry.IdState.Find(t => t.Item2 == p.State.ToString()).Item1);
                 writer.Flush(0x0b);
             });
 
-            RegisterOutgoing<ChatPacket>((p, writer) =>
+            RegisterOutgoing<ChatPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteChat(p.Message);
                 writer.WriteByte((byte)p.Position);
@@ -178,14 +193,14 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x0e);
             });
 
-            RegisterOutgoing<UnloadChunkPacket>((p, writer) =>
+            RegisterOutgoing<UnloadChunkPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteInt(p.Chunk.X);
                 writer.WriteInt(p.Chunk.Z);
                 writer.Flush(0x1c);
             });
 
-            RegisterOutgoing<PluginMessage>((p, writer) =>
+            RegisterOutgoing<PluginMessage>(ProtocolRole.Server, (p, writer) =>
             {
                 // Should be an identifier here.
                 writer.WriteString(p.Channel);
@@ -197,32 +212,32 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x17);
             });
 
-            RegisterOutgoing<ServerBrand>((p, writer) =>
+            RegisterOutgoing<ServerBrand>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteIdentifier(new Identifier("brand"));
                 writer.WriteString(p.Name);
                 writer.Flush(0x17);
             });
 
-            RegisterOutgoing<Kick>((p, writer) =>
+            RegisterOutgoing<Kick>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteChat(p.Reason);
                 writer.Flush(0x19);
             });
 
-            RegisterOutgoing<KeepAlivePacket>((p, writer) =>
+            RegisterOutgoing<KeepAlivePacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLong(p.Payload);
                 writer.Flush(0x1f);
             });
 
-            RegisterOutgoing<ChunkDataPacket>((p, writer) =>
+            RegisterOutgoing<ChunkDataPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteChunk(p.Chunk);
                 writer.Flush(0x20);
             });
 
-            RegisterOutgoing<JoinGame>((p, writer) =>
+            RegisterOutgoing<JoinGame>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteInt(p.Player.Handle);
                 writer.WriteBool(p.IsHardcore);
@@ -264,7 +279,7 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x24);
             });
 
-            RegisterOutgoing<PlayerInfo>((p, writer) =>
+            RegisterOutgoing<PlayerInfo>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt((int)p.Action);
                 writer.WriteVarInt(p.Players.Count);
@@ -315,7 +330,7 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x32);
             });
 
-            RegisterOutgoing<PlayerPositionAndLook>((p, writer) =>
+            RegisterOutgoing<PlayerPositionAndLook>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteDouble(p.X);
                 writer.WriteDouble(p.Y);
@@ -327,14 +342,14 @@ namespace Netherite.Protocols.v754
                 writer.Flush(0x34);
             });
 
-            RegisterOutgoing<ViewPosition>((p, writer) =>
+            RegisterOutgoing<ViewPosition>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.ChunkX);
                 writer.WriteVarInt(p.ChunkZ);
                 writer.Flush(0x40);
             });
 
-            RegisterOutgoing<TimeUpdate>((p, writer) =>
+            RegisterOutgoing<TimeUpdate>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLong(p.WorldAge);
                 writer.WriteLong(p.WorldTime);
@@ -342,6 +357,230 @@ namespace Netherite.Protocols.v754
             });
 
             #endregion
+        }
+
+        internal void RegisterClientPackets()
+        {
+            RegisterOutgoing<PlayerChat>(ProtocolRole.Client, (p, writer) =>
+            {
+                writer.WriteString(p.Message);
+                writer.Flush(0x03);
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Login, 0x01, reader =>
+            {
+                return new EncryptionRequest
+                {
+                    ServerID = reader.ReadString(),
+                    PublicKey = reader.ReadByteArray(),
+                    VerifyToken = reader.ReadByteArray()
+                };
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Login, 0x02, reader =>
+            {
+                return new LoginSuccess
+                {
+                    Guid = reader.ReadGuid(),
+                    UserName = reader.ReadString()
+                };
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x02, reader =>
+            {
+                reader.ReadVarInt();
+                reader.ReadGuid();
+                reader.ReadVarInt();
+                reader.ReadDouble();
+                reader.ReadDouble();
+                reader.ReadDouble();
+                reader.ReadAngle();
+                reader.ReadAngle();
+                reader.ReadAngle();
+                reader.ReadShort();
+                reader.ReadShort();
+                reader.ReadShort();
+
+                return new SpawnLivingEntity
+                {
+                    Entity = null
+                };
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x19, reader =>
+            {
+                return new Kick(Text.FromJson(reader.ReadString()));
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x20, reader =>
+            {
+                // This is important!
+                Logger.Log("Chunk X: " + reader.ReadInt());
+                Logger.Log("Chunk Z: " + reader.ReadInt());
+                bool isFullChunk = reader.ReadBool();
+                Logger.Log("Is Full Chunk?: " + isFullChunk);
+
+                int bitmask = reader.ReadVarInt();
+                Logger.Log("Primary Bitmask: " + Convert.ToString(bitmask, 2).PadLeft(16, '0'));
+
+                // Ignore the heightmap & biomes
+                reader.ReadNbt();
+                if (isFullChunk)
+                {
+                    int biomeCount = reader.ReadVarInt();
+                    for (int i = 0; i < biomeCount; i++)
+                    {
+                        reader.ReadVarInt();
+                    }
+                }
+
+                // Read the data
+                byte[] data = reader.ReadByteArray();
+                BufferReader dataReader = new BufferReader(data);
+                for (int i = 0; i < 16; i++)
+                {
+                    if (((bitmask >> i) & 1) != 1)
+                    {
+                        continue;
+                    }
+
+                    Logger.Log("---");
+                    Logger.Log("Block Count: " + dataReader.ReadShort());
+
+                    byte bitPerBlock = dataReader.ReadByte();
+                    Logger.Log("Bits/Block: " + bitPerBlock);
+
+                    if (bitPerBlock <= 8)
+                    {
+                        bitPerBlock = Math.Max((byte)4, bitPerBlock);
+                    }
+
+                    if (bitPerBlock <= 8)
+                    {
+                        string palette = "";
+                        int pCount = dataReader.ReadVarInt();
+                        for (int j = 0; j < pCount; j++)
+                        {
+                            palette += dataReader.ReadVarInt() + " ";
+                        }
+                        Logger.Log("Palette: " + palette.Trim());
+                    }
+
+                    int lCount = dataReader.ReadVarInt();
+                    for (int j = 0; j < lCount; j++)
+                    {
+                        dataReader.ReadLong();
+                    }
+                }
+
+                int leaked = dataReader.ReadRemaining().Length;
+                if(leaked > 0)
+                {
+                    Logger.Warn(leaked + " bytes are not read!");
+                }
+
+                return new ChunkDataPacket();
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x24, reader =>
+            {
+                reader.ReadInt();
+                reader.ReadBool();
+                reader.ReadByte();
+                reader.ReadByte();
+                int worldCount = reader.ReadVarInt();
+                for (int i = 0; i < worldCount; i++)
+                {
+                    reader.ReadString();
+                }
+
+                reader.ReadNbt();
+                reader.ReadNbt();
+                reader.ReadString();
+
+                reader.ReadLong();
+                reader.ReadVarInt();
+                reader.ReadVarInt();
+                reader.ReadBool();
+                reader.ReadBool();
+                reader.ReadBool();
+                reader.ReadBool();
+
+
+                return new JoinGame();
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x27, reader =>
+            {
+                return new EntityRelativeMove();
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x28, reader =>
+            {
+                return new EntityLookAndRelativeMove();
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x29, reader =>
+            {
+                return new EntityLook();
+            });
+
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x36, reader =>
+            {
+                List<Entity> entities = new List<Entity>();
+                return new DestroyEntityPacket
+                {
+                    Entities = entities
+                };
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x3a, reader =>
+            {
+                reader.ReadVarInt();
+                return new EntityHeadLook
+                {
+                    Entity = null,
+                    Yaw = (float)reader.ReadAngle()
+                };
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x46, reader =>
+            {
+                reader.ReadVarInt();
+                return new EntityVelocityPacket
+                {
+                    Entity = null,
+                    Velocity = new Vector3(reader.ReadShort() / 8000.0, reader.ReadShort() / 8000.0, reader.ReadShort() / 8000.0)
+                };
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x4e, reader =>
+            {
+                return new TimeUpdate
+                {
+                    WorldAge = reader.ReadLong(),
+                    WorldTime = reader.ReadLong()
+                };
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x56, reader =>
+            {
+                return new EntityTeleport();
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x5a, reader =>
+            {
+                // For now we ditch the titanic buffer mess
+                return new DeclareRecipes();
+            });
+
+            RegisterIncoming(ProtocolRole.Client, PacketState.Play, 0x1f, reader => new KeepAlivePacket(reader.ReadLong()));
+
+            RegisterOutgoing<KeepAlivePacket>(ProtocolRole.Client, (p, writer) =>
+            {
+                writer.WriteLong(p.Payload);
+                writer.Flush(0x10);
+            });
         }
     }
 }

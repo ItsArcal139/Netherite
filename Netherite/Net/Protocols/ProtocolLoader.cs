@@ -39,6 +39,8 @@ namespace Netherite.Net.Protocols
 
             List<Task> loadTasks = new List<Task>();
 
+            SemaphoreSlim loadLock = new SemaphoreSlim(1, 1);
+
             string[] files = Directory.GetFiles("Protocols");
             foreach (string file in files)
             {
@@ -52,8 +54,43 @@ namespace Netherite.Net.Protocols
                         {
                             if (typeof(Protocol).IsAssignableFrom(t))
                             {
-                                RuntimeHelpers.RunClassConstructor(t.TypeHandle);
-                                protocols.Add(t);
+                                try
+                                {
+                                    RuntimeHelpers.RunClassConstructor(t.TypeHandle);
+                                    protocols.Add(t);
+                                }
+                                catch (TypeInitializationException ex)
+                                {
+                                    loadLock.Wait();
+                                    Logger.Error(
+                                        TranslateText.Of("Error loading %s")
+                                        .AddWith(LiteralText.Of(file).SetColor(TextColor.Gold))
+                                        );
+                                    Logger.Error(ex.InnerException.GetType().Name + ": " + ex.InnerException.Message);
+
+                                    string[] lines = ex.InnerException.StackTrace.Split('\n');
+                                    foreach (string line in lines)
+                                    {
+                                        Logger.Error(line);
+                                    }
+                                    loadLock.Release();
+                                }
+                                catch (Exception ex)
+                                {
+                                    loadLock.Wait();
+                                    Logger.Error(
+                                        TranslateText.Of("Error loading %s")
+                                        .AddWith(LiteralText.Of(file).SetColor(TextColor.Gold))
+                                        );
+                                    Logger.Error(ex.GetType().Name + ": " + ex.Message);
+
+                                    string[] lines = ex.StackTrace.Split('\n');
+                                    foreach(string line in lines)
+                                    {
+                                        Logger.Error(line);
+                                    }
+                                    loadLock.Release();
+                                }
                             }
                         }
                     }));

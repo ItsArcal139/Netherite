@@ -73,11 +73,8 @@ namespace Netherite.Utils
 
         public static void Verbose(Text t, string name = DefaultName)
         {
-            if (Server.Instance.Config.DebugPacket)
-            {
-                if (name == null) name = GetCallSourceName();
-                Log(LogLevel.Verbose, t, TextColor.DarkGray, name);
-            }
+            if (name == null) name = GetCallSourceName();
+            Log(LogLevel.Verbose, t, TextColor.DarkGray, name);
         }
 
         public static void Verbose(string msg, string name = DefaultName)

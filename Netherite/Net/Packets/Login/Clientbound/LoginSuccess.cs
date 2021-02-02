@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Netherite.Net.Packets.Login.Clientbound
 {
@@ -15,7 +16,11 @@ namespace Netherite.Net.Packets.Login.Clientbound
             Guid = guid;
             UserName = userName;
         }
+
+        public override async Task ClientHandleAsync(ServerConnection connection)
+        {
+            connection.CurrentState = PacketState.Play;
+            await Task.CompletedTask;
+        }
     }
-
-
 }

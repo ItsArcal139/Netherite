@@ -21,20 +21,16 @@ namespace Netherite.Net.Packets
         public virtual bool IsConstantPacket => false;
 
         public virtual Task HandleAsync(Server server, Player player) => Task.CompletedTask;
+
+        public virtual Task ClientHandleAsync(ServerConnection connection) => Task.CompletedTask;
     }
 
     internal class UnknownPacket : Packet
     {
+        internal byte[] buffer;
         internal UnknownPacket(byte[] buffer) : base()
         {
-            var text = LiteralText.Of("Packet: ");
-            foreach (byte b in buffer)
-            {
-                text.AddExtra(
-                    LiteralText.Of($"{b:x2} ")
-                );
-            }
-            Logger.Verbose(text);
+            this.buffer = buffer;
         }
     }
 

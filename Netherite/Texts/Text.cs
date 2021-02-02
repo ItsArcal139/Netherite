@@ -1,6 +1,7 @@
 ﻿using Netherite.Converters.Json;
 using Netherite.Utils.Extensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -97,6 +98,32 @@ namespace Netherite.Texts
         {
             return LiteralText.Of(t.Namespace + ".").SetColor(TextColor.DarkGray)
                     .AddExtra(LiteralText.Of(t.Name).SetColor(TextColor.Gold));
+        }
+
+        public static Text FromJson(string json) => FromJson(JObject.Parse(json));
+
+        public static Text FromJson(JObject obj)
+        {
+            Text result;
+            if (obj["text"] != null)
+            {
+                result = LiteralText.Of((obj["text"] as JValue).Value<string>());
+            }
+            else if (obj["translate"] != null)
+            {
+                var tr = TranslateText.Of((obj["translate"] as JValue).Value<string>());
+                foreach (JToken token in obj["with"] as JArray)
+                {
+                    tr.AddWith(FromJson(token as JObject));
+                }
+                result = tr;
+            }
+            else
+            {
+                result = LiteralText.Of(obj.ToString());
+            }
+
+            return result;
         }
     }
 

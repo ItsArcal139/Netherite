@@ -26,4 +26,9 @@ namespace Netherite.Net.Packets.Play.Clientbound
             SenderGuid = sender;
         }
     }
+
+    public class DeclareRecipes : Packet
+    {
+
+    }
 }

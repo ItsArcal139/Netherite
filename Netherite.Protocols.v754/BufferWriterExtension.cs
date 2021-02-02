@@ -1,6 +1,7 @@
 ﻿using Netherite.Blocks;
 using Netherite.Nbt;
 using Netherite.Net.IO;
+using Netherite.Utils;
 using Netherite.Worlds;
 using System.Collections.Generic;
 
@@ -24,7 +25,6 @@ namespace Netherite.Protocols.v754
                     col.WriteChunkSection(chunk.Sections[sectionY]);
                 }
             }
-
             writer.WriteVarInt(mask);
 
             NbtCompound heightmap = new NbtCompound();
@@ -139,16 +139,9 @@ namespace Netherite.Protocols.v754
                 writer.WriteLong(val);
             }
 
-            foreach (byte b in section.BlockLight.Data)
-            {
-                writer.WriteByte(b);
-            }
-
-            foreach (byte b in section.SkyLight.Data)
-            {
-                writer.WriteByte(b);
-            }
-
+            // Light data are handled by Update Light packet
+            // Sent light data by mistake, so there were no more chunks loaded
+            // since the data structure is invalid
         }
     }
 }

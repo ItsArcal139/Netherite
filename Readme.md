@@ -14,6 +14,3 @@ A Minecraft server implementation written with C#.
 - [ ] Redstone
 - [ ] Mob AI
 - [ ] World generation
-
-## Known issues
-* Chunk sections over Y=16 are ignored on protocol 754 and Snapshot 9.

@@ -123,6 +123,15 @@ namespace Netherite.Net.IO
             return result;
         }
 
+        public bool CanReadVarInt()
+        {
+            for(int i=index; i<buffer.Length; i++)
+            {
+                if ((buffer[i] & 0b10000000) == 0) return true;
+            }
+            return false;
+        }
+
         public int ReadVarInt(bool peek = false)
         {
             return ReadVarInt(out int _, peek);
@@ -227,5 +236,27 @@ namespace Netherite.Net.IO
         }
 
         public NbtTag ReadNbt() => ReadNbt(out _);
+
+        public Guid ReadGuid(out int length)
+        {
+            byte[] buf = new byte[16];
+            Array.Copy(buffer, index, buf, 0, 16);
+            index += 16;
+            length = 16;
+
+            Array.Reverse(buf, 0, 4);
+            Array.Reverse(buf, 4, 2);
+            Array.Reverse(buf, 6, 2);
+
+            return new Guid(buf);
+        }
+
+        public Guid ReadGuid() => ReadGuid(out _);
+
+        public void Skip(int step) => index += step;
+
+        public double ReadAngle(out int length) => ReadByte(out length) / 256 * 360;
+
+        public double ReadAngle() => ReadAngle(out _);
     }
 }
