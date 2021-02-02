@@ -29,7 +29,6 @@ namespace Netherite.Protocols.Snapshot.v9
                 }
             }
             writer.WriteVarInt(mask);
-            Logger.Log("" + mask);
 
             NbtCompound heightmap = new NbtCompound();
             heightmap.Name = "";
@@ -149,16 +148,6 @@ namespace Netherite.Protocols.Snapshot.v9
             foreach (long val in data)
             {
                 writer.WriteLong(val);
-            }
-
-            foreach (byte b in section.BlockLight.Data)
-            {
-                writer.WriteByte(b);
-            }
-
-            foreach (byte b in section.SkyLight.Data)
-            {
-                writer.WriteByte(b);
             }
         }
     }
