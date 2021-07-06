@@ -14,3 +14,4 @@ A Minecraft server implementation written with C#.
 - [ ] Redstone
 - [ ] Mob AI
 - [ ] World generation
+- [ ] 1.17 Sculk

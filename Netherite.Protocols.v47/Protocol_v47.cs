@@ -62,22 +62,26 @@ namespace Netherite.Protocols.v47
         internal Protocol_v47()
         {
             RegisterDefaults();
+        }
+
+        internal void RegisterServerPackets()
+        {
 
             #region ------ Incoming packets ------
 
-            RegisterIncoming(PacketState.Play, 0x00, reader => new KeepAlivePacket(reader.ReadVarInt()));
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x00, reader => new KeepAlivePacket(reader.ReadVarInt()));
 
-            RegisterIncoming(PacketState.Play, 0x01, reader => new PlayerChat
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x01, reader => new PlayerChat
             {
                 Message = reader.ReadString()
             });
 
-            RegisterIncoming(PacketState.Play, 0x03, reader => new PlayerOnGround
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x03, reader => new PlayerOnGround
             {
                 OnGround = reader.ReadBool()
             });
 
-            RegisterIncoming(PacketState.Play, 0x04, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x04, reader =>
             {
                 return new UpdatePlayerPosition
                 {
@@ -88,7 +92,7 @@ namespace Netherite.Protocols.v47
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x05, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x05, reader =>
             {
                 return new UpdatePlayerLook
                 {
@@ -98,7 +102,7 @@ namespace Netherite.Protocols.v47
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x06, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x06, reader =>
             {
                 return new UpdatePlayerPositionAndLook
                 {
@@ -111,7 +115,7 @@ namespace Netherite.Protocols.v47
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x08, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x08, reader =>
             {
                 return new BlockPlace
                 {
@@ -127,9 +131,9 @@ namespace Netherite.Protocols.v47
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x0a, reader => new AnimationIn());
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x0a, reader => new AnimationIn());
 
-            RegisterIncoming(PacketState.Play, 0x0b, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x0b, reader =>
             {
                 return new EntityAction
                 {
@@ -139,7 +143,7 @@ namespace Netherite.Protocols.v47
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x10, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x10, reader =>
             {
                 return new CreativeInventoryAction
                 {
@@ -148,7 +152,7 @@ namespace Netherite.Protocols.v47
                 };
             });
 
-            RegisterIncoming(PacketState.Play, 0x15, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x15, reader =>
             {
                 ClientSettingsPacket p = new ClientSettingsPacket
                 {
@@ -161,7 +165,7 @@ namespace Netherite.Protocols.v47
                 return p;
             });
 
-            RegisterIncoming(PacketState.Play, 0x17, reader =>
+            RegisterIncoming(ProtocolRole.Server, PacketState.Play, 0x17, reader =>
             {
                 return new PluginMessage
                 {
@@ -174,7 +178,7 @@ namespace Netherite.Protocols.v47
 
             #region ------ Outgoing packets ------
 
-            RegisterOutgoing<EncryptionRequest>((p, writer) =>
+            RegisterOutgoing<EncryptionRequest>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString(p.ServerID);
                 writer.WriteByteArray(p.PublicKey);
@@ -182,20 +186,20 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x01);
             });
 
-            RegisterOutgoing<LoginSuccess>((p, writer) =>
+            RegisterOutgoing<LoginSuccess>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString(p.Guid.ToString());
                 writer.WriteString(p.UserName);
                 writer.Flush(0x02);
             });
 
-            RegisterOutgoing<KeepAlivePacket>((p, writer) =>
+            RegisterOutgoing<KeepAlivePacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt((int)p.Payload);
                 writer.Flush(0x00);
             });
 
-            RegisterOutgoing<JoinGame>((p, writer) =>
+            RegisterOutgoing<JoinGame>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteInt(p.Player.Handle);
 
@@ -215,21 +219,21 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x01);
             });
 
-            RegisterOutgoing<ChatPacket>((p, writer) =>
+            RegisterOutgoing<ChatPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString(JsonConvert.SerializeObject(p.Message));
                 writer.WriteByte((byte)p.Position);
                 writer.Flush(0x02);
             });
 
-            RegisterOutgoing<TimeUpdate>((p, writer) =>
+            RegisterOutgoing<TimeUpdate>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLong(p.WorldAge);
                 writer.WriteLong(p.WorldTime);
                 writer.Flush(0x03);
             });
 
-            RegisterOutgoing<PerformRespawn>((p, writer) =>
+            RegisterOutgoing<PerformRespawn>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteInt(p.Dimension);
                 writer.WriteByte(p.Difficulty);
@@ -239,7 +243,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x07);
             });
 
-            RegisterOutgoing<PlayerPositionAndLook>((p, writer) =>
+            RegisterOutgoing<PlayerPositionAndLook>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteDouble(p.X);
                 writer.WriteDouble(p.Y);
@@ -250,20 +254,20 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x08);
             });
 
-            RegisterOutgoing<HeldItemChangePacket>((p, writer) =>
+            RegisterOutgoing<HeldItemChangePacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteByte(p.Slot);
                 writer.Flush(0x09);
             });
 
-            RegisterOutgoing<AnimationOut>((p, writer) =>
+            RegisterOutgoing<AnimationOut>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
                 writer.WriteByte(p.Animation);
                 writer.Flush(0x0b);
             });
 
-            RegisterOutgoing<SpawnPlayer>((p, writer) =>
+            RegisterOutgoing<SpawnPlayer>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Player.Handle);
                 writer.WriteGuid(p.Player.Guid);
@@ -280,7 +284,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x0c);
             });
 
-            RegisterOutgoing<DestroyEntityPacket>((p, writer) =>
+            RegisterOutgoing<DestroyEntityPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entities.Count);
                 foreach (Entity e in p.Entities)
@@ -290,7 +294,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x13);
             });
 
-            RegisterOutgoing<EntityRelativeMove>((p, writer) =>
+            RegisterOutgoing<EntityRelativeMove>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
                 writer.WriteFixedPointB(p.Delta.X);
@@ -300,7 +304,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x15);
             });
 
-            RegisterOutgoing<EntityLook>((p, writer) =>
+            RegisterOutgoing<EntityLook>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
                 writer.WriteAngle(p.Yaw);
@@ -309,7 +313,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x16);
             });
 
-            RegisterOutgoing<EntityLookAndRelativeMove>((p, writer) =>
+            RegisterOutgoing<EntityLookAndRelativeMove>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
                 writer.WriteFixedPointB(p.Delta.X);
@@ -321,7 +325,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x17);
             });
 
-            RegisterOutgoing<EntityTeleport>((p, writer) =>
+            RegisterOutgoing<EntityTeleport>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
                 writer.WriteFixedPointI(p.Position.X);
@@ -333,7 +337,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x18);
             });
 
-            RegisterOutgoing<EntityHeadLook>((p, writer) =>
+            RegisterOutgoing<EntityHeadLook>(ProtocolRole.Server, (p, writer) =>
             {
                 int handle = p.Entity.Handle;
                 if (p.Entity is DummyEntity dm) handle = dm.Handle;
@@ -342,7 +346,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x19);
             });
 
-            RegisterOutgoing<EntityMetadataPacket>((p, writer) =>
+            RegisterOutgoing<EntityMetadataPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
 
@@ -354,14 +358,14 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x1c);
             });
 
-            RegisterOutgoing<ChunkDataPacket>((p, writer) =>
+            RegisterOutgoing<ChunkDataPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 var chunkWriter = new ChunkDataWriter(p.Chunk);
                 chunkWriter.WriteTo(writer);
                 writer.Flush(0x21);
             });
 
-            RegisterOutgoing<BlockChange>((p, writer) =>
+            RegisterOutgoing<BlockChange>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLongPos(p.Position);
 
@@ -371,7 +375,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x23);
             });
 
-            RegisterOutgoing<PlaySoundEffect>((p, writer) =>
+            RegisterOutgoing<PlaySoundEffect>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString(p.Sound);
                 writer.WriteInt((int)p.X * 8);
@@ -382,7 +386,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x29);
             });
 
-            RegisterOutgoing<PlayerInfo>((p, writer) =>
+            RegisterOutgoing<PlayerInfo>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt((int)p.Action);
                 writer.WriteVarInt(p.Players.Count);
@@ -429,7 +433,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x38);
             });
 
-            RegisterOutgoing<ServerBrand>((p, writer) =>
+            RegisterOutgoing<ServerBrand>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString("MC|Brand");
                 writer.WriteString(p.Name);
@@ -437,7 +441,7 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x3f);
             });
 
-            RegisterOutgoing<PluginMessage>((p, writer) =>
+            RegisterOutgoing<PluginMessage>(ProtocolRole.Server, (p, writer) =>
             {
                 Logger.Log(
                     TranslateText.Of("Plugin channel: {0}: {1}")
@@ -458,13 +462,13 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x3f);
             });
 
-            RegisterOutgoing<Kick>((p, writer) =>
+            RegisterOutgoing<Kick>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteChat(p.Reason);
                 writer.Flush(0x40);
             });
 
-            RegisterOutgoing<DisplayTitle>((p, writer) =>
+            RegisterOutgoing<DisplayTitle>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt((int)p.Action);
 
@@ -486,21 +490,21 @@ namespace Netherite.Protocols.v47
                 writer.Flush(0x45);
             });
 
-            RegisterOutgoing<PlayerListHeaderAndFooter>((p, writer) =>
+            RegisterOutgoing<PlayerListHeaderAndFooter>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteChat(p.Header);
                 writer.WriteChat(p.Footer);
                 writer.Flush(0x47);
             });
 
-            RegisterOutgoing<ResourcePackSend>((p, writer) =>
+            RegisterOutgoing<ResourcePackSend>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteString(p.Url);
                 writer.WriteString(p.Hash);
                 writer.Flush(0x48);
             });
 
-            RegisterOutgoing<EntityNBT>((p, writer) =>
+            RegisterOutgoing<EntityNBT>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.Entity.Handle);
                 writer.WriteNbt(p.Tag);

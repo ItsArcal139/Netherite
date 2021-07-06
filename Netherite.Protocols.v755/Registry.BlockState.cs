@@ -1,7 +1,7 @@
 
 using System.Collections.Generic;
 
-namespace Netherite.Protocols.Snapshot.v9
+namespace Netherite.Protocols.v755
 {
     public partial class Registry
     {

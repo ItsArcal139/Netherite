@@ -15,20 +15,20 @@ namespace Netherite.Generator
     {
         static void Main(string[] args)
         {
-            GenerateBlockStates();
+            GenerateBlockStates("Netherite.Protocols.v754");
         }
 
-        public static void GenerateBlockStates()
+        static void GenerateBlockStates(string @namespace)
         {
-            string content = @"
-namespace Netherite.Protocols.v754
-{
+            string content = @$"
+namespace {@namespace}
+{{
     public partial class Registry
-    {
+    {{
         public static List<(int, string)> IdState = new List<(int, string)>();
 
         static Registry()
-        {";
+        {{";
 
             var json = JObject.Parse(File.ReadAllText("blocks.json"));
             foreach(var (name, token) in json)

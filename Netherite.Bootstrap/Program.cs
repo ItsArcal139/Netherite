@@ -19,7 +19,7 @@ namespace Netherite.Bootstrap
 
             AppDomain.CurrentDomain.UnhandledException += (o, e) =>
             {
-                string[] lines = e.ExceptionObject.ToString().Split('\n');
+                string[] lines = e.ExceptionObject.ToString()?.Split('\n') ?? new string[0];
                 foreach (string line in lines)
                 {
                     Logger.Error(line);

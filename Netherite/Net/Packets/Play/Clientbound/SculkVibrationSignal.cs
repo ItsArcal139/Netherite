@@ -8,7 +8,6 @@ using System.Text;
 
 namespace Netherite.Net.Packets.Play.Clientbound
 {
-    [PreRelease("1.17")]
     public class SculkVibrationSignal : Packet
     {
         public Vector3 Source { get; set; }

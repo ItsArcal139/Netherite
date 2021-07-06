@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
-namespace Netherite.Protocols.Snapshot.v9
+namespace Netherite.Protocols.v755
 {
     public static class BufferWriterExtension
     {

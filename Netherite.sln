@@ -24,7 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Readme.md = Readme.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netherite.Protocols.Snapshot.v9", "Netherite.Protocols.Snapshot.v9\Netherite.Protocols.Snapshot.v9.csproj", "{65AFB601-3832-41AF-9BCE-4A15C53AE6B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netherite.Protocols.v755", "Netherite.Protocols.v755\Netherite.Protocols.v755.csproj", "{65AFB601-3832-41AF-9BCE-4A15C53AE6B2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Netherite.Test", "Netherite.Test\Netherite.Test.csproj", "{CDBFE87E-8FF8-4B2E-A33E-DBA3987B95A7}"
 EndProject
