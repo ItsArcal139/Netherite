@@ -47,7 +47,7 @@ namespace Netherite.Worlds
         /// <summary>
         /// The time of the world.
         /// </summary>
-        public long Time { get; set; } = 0;
+        public long Time { get; set; }
 
         /// <summary>
         /// The game version of the world.
@@ -198,9 +198,11 @@ namespace Netherite.Worlds
             return chunk.GetBiome(blockX - cx * 16, y, blockZ - cz * 16);
         }
 
-        public Block GetBlock(int x, int y, int z) => GetChunkByBlockPos(x, z).GetBlock(x % 16, y, z % 16);
+        public Block GetBlock(int x, int y, int z) =>
+            GetChunkByBlockPos(x, z).GetBlock(x % 16, y, z % 16);
 
-        public void SetBlock(int x, int y, int z, BlockState b) => GetChunkByBlockPos(x, z).SetBlock(x % 16, y, z % 16, b);
+        public void SetBlock(int x, int y, int z, BlockState b) =>
+            GetChunkByBlockPos(x, z).SetBlock(x % 16, y, z % 16, b);
 
         public List<Entity> Entities { get; private set; } = new List<Entity>();
 

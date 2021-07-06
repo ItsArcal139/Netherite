@@ -5,7 +5,7 @@ namespace Netherite.Exceptions
 {
     public class NetheriteException : Exception
     {
-        public NetheriteException() : base() { }
+        public NetheriteException() { }
 
         public NetheriteException(string msg) : base(msg) { }
 
@@ -16,7 +16,7 @@ namespace Netherite.Exceptions
     {
         public World World { get; private set; }
 
-        public NetheriteWorldException(World world) : base()
+        public NetheriteWorldException(World world)
         {
             World = world;
         }

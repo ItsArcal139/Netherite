@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>Netherite.Protocols.Snapshot.v9</RootNamespace>
+    <RootNamespace>Netherite.Protocols.v755</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

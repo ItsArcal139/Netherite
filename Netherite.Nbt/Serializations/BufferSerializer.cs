@@ -5,7 +5,7 @@ namespace Netherite.Nbt.Serializations
 {
     internal class BufferSerializer : INbtSerializer
     {
-        private BufferWriter writer = new BufferWriter();
+        private BufferWriter writer = new();
 
         public byte[] ToBuffer() => writer.ToBuffer();
 

@@ -3,6 +3,9 @@ using Netherite.Net.IO;
 
 namespace Netherite.Utils
 {
+    /// <summary>
+    /// An utility class that stores buffer data until it can be handled as a packet and take it out.
+    /// </summary>
     public class BufferStorage
     {
         private byte[] buffer = new byte[0];

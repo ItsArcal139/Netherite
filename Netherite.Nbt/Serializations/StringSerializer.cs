@@ -28,36 +28,36 @@ namespace Netherite.Nbt.Serializations
         {
             if (tag.Name != null)
             {
-                result += ($@"{tag.Name}:");
+                result += $@"{tag.Name}:";
             }
         }
 
         public void WriteByte(NbtByte tag)
         {
             WritePrefix(tag);
-            result += ($"{tag.Value}b");
+            result += $"{tag.Value}b";
         }
 
         public void WriteByteArray(NbtByteArray tag)
         {
             WritePrefix(tag);
-            result += ($"[");
+            result += "[";
 
             bool first = true;
             foreach (long n in tag.Value)
             {
                 if (!first) result += (",");
                 first = false;
-                result += ($"{n}b");
+                result += $"{n}b";
             }
 
-            result += ($"]");
+            result += "]";
         }
 
         public void WriteCompound(NbtCompound tag)
         {
             WritePrefix(tag);
-            result += ("{");
+            result += "{";
 
             bool first = true;
             foreach (KeyValuePair<string, NbtTag> child in tag)
@@ -67,91 +67,91 @@ namespace Netherite.Nbt.Serializations
                 Write(child.Value);
             }
 
-            result += ("}");
+            result += "}";
         }
 
         public void WriteDouble(NbtDouble tag)
         {
             WritePrefix(tag);
-            result += ($"{tag.Value}d");
+            result += $"{tag.Value}d";
         }
 
         public void WriteFloat(NbtFloat tag)
         {
             WritePrefix(tag);
-            result += ($"{tag.Value}f");
+            result += $"{tag.Value}f";
         }
 
         public void WriteInt(NbtInt tag)
         {
             WritePrefix(tag);
-            result += ($"{tag.Value}");
+            result += $"{tag.Value}";
         }
 
         public void WriteIntArray(NbtIntArray tag)
         {
             WritePrefix(tag);
-            result += ($"[");
+            result += "[";
 
             bool first = true;
             foreach (int n in tag.Value)
             {
-                if (!first) result += (",");
+                if (!first) result += ",";
                 first = false;
                 result += ($"{n}");
             }
 
-            result += ($"]");
+            result += "]";
         }
 
         public void WriteList(NbtList tag)
         {
             WritePrefix(tag);
-            result += ($"[");
+            result += "[";
 
             bool first = true;
             foreach (NbtTag n in tag)
             {
-                if (!first) result += (",");
+                if (!first) result += ",";
                 first = false;
                 Write(n);
             }
 
-            result += ($"]");
+            result += "]";
         }
 
         public void WriteLong(NbtLong tag)
         {
             WritePrefix(tag);
-            result += ($"{tag.Value}L");
+            result += $"{tag.Value}L";
         }
 
         public void WriteLongArray(NbtLongArray tag)
         {
             WritePrefix(tag);
-            result += ($"[");
+            result += "[";
 
             bool first = true;
             foreach (long n in tag.Value)
             {
-                if (!first) result += (",");
+                if (!first) result += ",";
                 first = false;
-                result += ($"{n}L");
+                result += $"{n}L";
             }
 
-            result += ($"]");
+            result += "]";
         }
 
         public void WriteShort(NbtShort tag)
         {
             WritePrefix(tag);
-            result += ($"{tag.Value}s");
+            result += $"{tag.Value}s";
         }
 
         public void WriteString(NbtString tag)
         {
             WritePrefix(tag);
-            result += ($@"""{tag.Value.Replace("\\", "\\\\")}""");
+            result += $@"""{tag.Value.Replace("\\", "\\\\")}""";
         }
     }
 }

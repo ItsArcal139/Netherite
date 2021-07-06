@@ -161,8 +161,6 @@ namespace Netherite.Protocols.v755
                 writer.Flush(0x05);
             });
 
-            // All the packet ID are shifted by 1 after ID 0x5.
-
             RegisterOutgoing<BlockChange>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLongPos(p.Position);
@@ -213,13 +211,13 @@ namespace Netherite.Protocols.v755
             RegisterOutgoing<KeepAlivePacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteLong(p.Payload);
-                writer.Flush(0x20);
+                writer.Flush(0x21);
             });
 
             RegisterOutgoing<ChunkDataPacket>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteChunk(p.Chunk);
-                writer.Flush(0x21);
+                writer.Flush(0x22);
             });
 
             RegisterOutgoing<JoinGame>(ProtocolRole.Server, (p, writer) =>
@@ -228,12 +226,11 @@ namespace Netherite.Protocols.v755
                 writer.WriteBool(p.IsHardcore);
                 writer.WriteByte((byte) p.Mode);
 
-                byte prev = 0xff;
+                byte prev = 0xff; // -1 is encoded as 0xff
                 if (p.PreviousMode != null)
                 {
                     prev = (byte) p.PreviousMode;
                 }
-
                 writer.WriteByte(prev);
 
                 // world count & names
@@ -253,8 +250,7 @@ namespace Netherite.Protocols.v755
 
                 // world name
                 writer.WriteIdentifier(p.WorldName);
-
-                writer.WriteLong(p.Seed);
+                writer.WriteLong(p.Seed); // TODO: should be "hashed" seed
                 writer.WriteVarInt(p.MaxPlayers);
                 writer.WriteVarInt(p.ViewDistance);
                 writer.WriteBool(p.ReducedDebugInfo);
@@ -262,7 +258,7 @@ namespace Netherite.Protocols.v755
                 writer.WriteBool(p.IsDebugWorld);
                 writer.WriteBool(p.IsFlatWorld);
 
-                writer.Flush(0x25);
+                writer.Flush(0x26);
             });
 
             RegisterOutgoing<PlayerInfo>(ProtocolRole.Server, (p, writer) =>
@@ -273,6 +269,8 @@ namespace Netherite.Protocols.v755
                 foreach (PlayerInfo.Meta player in p.Players)
                 {
                     writer.WriteGuid(player.Profile.Guid);
+                    bool hasDisplayName = player.DisplayName != null;
+                    
                     switch (p.Action)
                     {
                         case PlayerInfo.PacketAction.AddPlayer:
@@ -283,20 +281,15 @@ namespace Netherite.Protocols.v755
 
                             foreach (Property prop in props)
                             {
-                                bool signed = player.Profile.Properties.Properties[0].IsSigned;
-                                writer.WriteVarInt(signed ? 4 : 3);
-
                                 writer.WriteString(prop.Name);
                                 writer.WriteString(prop.Value);
                                 writer.WriteBool(prop.IsSigned);
-
                                 if (prop.IsSigned) writer.WriteString(prop.Signature);
                             }
-
                             writer.WriteVarInt((int) player.Mode);
                             writer.WriteVarInt(player.Latency);
-                            writer.WriteBool(player.DisplayName != null);
-                            if (player.DisplayName != null) writer.WriteChat(player.DisplayName);
+                            writer.WriteBool(hasDisplayName);
+                            if (hasDisplayName) writer.WriteChat(player.DisplayName);
                             break;
                         case PlayerInfo.PacketAction.UpdateGameMode:
                             writer.WriteVarInt((int) player.Mode);
@@ -305,15 +298,16 @@ namespace Netherite.Protocols.v755
                             writer.WriteVarInt(player.Latency);
                             break;
                         case PlayerInfo.PacketAction.UpdateDisplayName:
-                            writer.WriteBool(player.DisplayName != null);
-                            if (player.DisplayName != null) writer.WriteChat(player.DisplayName);
+                            writer.WriteBool(hasDisplayName);
+                            if (hasDisplayName) writer.WriteChat(player.DisplayName);
                             break;
                         case PlayerInfo.PacketAction.RemovePlayer:
+                            // No fields for this action.
                             break;
                     }
                 }
 
-                writer.Flush(0x33);
+                writer.Flush(0x36);
             });
 
             RegisterOutgoing<PlayerPositionAndLook>(ProtocolRole.Server, (p, writer) =>
@@ -325,14 +319,14 @@ namespace Netherite.Protocols.v755
                 writer.WriteFloat(p.Pitch);
                 writer.WriteByte(p.RelationFlags);
                 writer.WriteVarInt(p.TeleportId);
-                writer.Flush(0x35);
+                writer.Flush(0x38);
             });
 
             RegisterOutgoing<ViewPosition>(ProtocolRole.Server, (p, writer) =>
             {
                 writer.WriteVarInt(p.ChunkX);
                 writer.WriteVarInt(p.ChunkZ);
-                writer.Flush(0x41);
+                writer.Flush(0x49);
             });
 
             #endregion

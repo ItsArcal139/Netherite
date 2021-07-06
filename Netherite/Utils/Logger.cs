@@ -15,7 +15,7 @@ namespace Netherite.Utils
 
     public static class Logger
     {
-        public static LogLevel Level { get; set; } = LogLevel.Info;
+        public static LogLevel Level { get; set; }
 
         private const string DefaultName = null;
 
@@ -52,6 +52,8 @@ namespace Netherite.Utils
         {
 #if DEBUG
             Level = LogLevel.Verbose;
+#else
+            Level = LogLevel.Info;
 #endif
         }
 
@@ -68,61 +70,61 @@ namespace Netherite.Utils
 
         public static void Log(Text t, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Log(LogLevel.Log, t, TextColor.DarkGray, name);
         }
 
         public static void Log(string msg, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Log(LiteralText.Of(msg), name);
         }
 
         public static void Verbose(Text t, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Log(LogLevel.Verbose, t, TextColor.DarkGray, name);
         }
 
         public static void Verbose(string msg, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Verbose(LiteralText.Of(msg), name);
         }
 
         public static void Info(Text t, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Log(LogLevel.Info, t, TextColor.Green, name);
         }
 
         public static void Info(string msg, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Info(LiteralText.Of(msg), name);
         }
 
         public static void Warn(Text t, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Log(LogLevel.Warn, t, TextColor.Gold, name);
         }
 
         public static void Warn(string msg, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Warn(LiteralText.Of(msg), name);
         }
 
         public static void Error(Text t, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Log(LogLevel.Error, t, TextColor.Red, name);
         }
 
         public static void Error(string msg, string name = DefaultName)
         {
-            if (name == null) name = GetCallSourceName();
+            name ??= GetCallSourceName();
             Error(LiteralText.Of(msg), name);
         }
     }

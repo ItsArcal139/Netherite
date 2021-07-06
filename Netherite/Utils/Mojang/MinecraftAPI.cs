@@ -63,20 +63,18 @@ namespace Netherite.Utils.Mojang
 
         public static async Task<GameProfile> HasJoined(string username, string serverId)
         {
-            using (var response = await http.GetAsync($"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={username}&serverId={serverId}"))
+            using var response = await http.GetAsync($"https://sessionserver.mojang.com/session/minecraft/hasJoined?username={username}&serverId={serverId}");
+            if (response.IsSuccessStatusCode)
             {
-                if (response.IsSuccessStatusCode)
-                {
-                    return (GameProfile)JsonConvert.DeserializeObject<JoinedResponse>(await response.Content.ReadAsStringAsync());
-                }
+                return (GameProfile)JsonConvert.DeserializeObject<JoinedResponse>(await response.Content.ReadAsStringAsync());
             }
 
             return null;
         }
 
-        public static async Task Join(string accessToken, string selectedProfile, string serverId)
+        public static Task Join(string accessToken, string selectedProfile, string serverId)
         {
-
+            return Task.CompletedTask;
         }
 
         private static Guid clientToken = Guid.NewGuid();

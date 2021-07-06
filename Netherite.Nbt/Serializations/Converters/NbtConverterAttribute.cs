@@ -12,9 +12,7 @@ namespace Netherite.Nbt.Serializations.Converters
         public NbtConverterAttribute(Type converterType)
         {
             if(!typeof(NbtConverter).IsAssignableFrom(converterType))
-            {
                 throw new ArgumentException("Type " + converterType + " is not of type " + nameof(NbtConverter));
-            }
             ConverterType = converterType;
         }
     }

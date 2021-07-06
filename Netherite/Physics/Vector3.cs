@@ -33,10 +33,7 @@ namespace Netherite.Physics
         /// <param name="a">The left <see cref="Vector3"/>.</param>
         /// <param name="b">The right <see cref="Vector3"/>.</param>
         /// <returns>The inner product of the two vectors.</returns>
-        public static double Product(Vector3 a, Vector3 b)
-        {
-            return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
-        }
+        public static double Product(Vector3 a, Vector3 b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
 
         /// <summary>
         /// Get the cross product of <see cref="Vector3"/> <paramref name="a"/> and <paramref name="b"/>.

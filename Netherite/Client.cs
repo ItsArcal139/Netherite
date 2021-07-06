@@ -24,12 +24,12 @@ namespace Netherite
             Instance = this;
             NetworkManager = new ClientNetworkManager(address, port);
 
-            AppDomain.CurrentDomain.ProcessExit += (o, e) =>
+            AppDomain.CurrentDomain.ProcessExit += (_, _) =>
             {
                 Stop();
             };
 
-            Console.CancelKeyPress += (o, e) =>
+            Console.CancelKeyPress += (_, e) =>
             {
                 e.Cancel = true;
                 Stop();
@@ -52,7 +52,7 @@ namespace Netherite
             }
         }
 
-        private bool stopped = false;
+        private bool stopped;
 
         public void Stop()
         {

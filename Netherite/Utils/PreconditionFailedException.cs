@@ -5,11 +5,9 @@ namespace Netherite.Utils
     {
         public object Value { get; private set; }
 
-        public PreconditionFailedException() : base() { }
-
         public PreconditionFailedException(string msg) : base(msg) { }
 
-        public PreconditionFailedException(object val) : base()
+        public PreconditionFailedException(object val)
         {
             Value = val;
         }

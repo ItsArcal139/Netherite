@@ -9,10 +9,8 @@ namespace Netherite.Utils
     {
         public static async Task CompressAsync(byte[] byteIn, Stream outStream)
         {
-            using var stream = new ZlibStream(new MemoryStream(), CompressionMode.Compress, CompressionLevel.BestCompression);
-
+            await using var stream = new ZlibStream(new MemoryStream(), CompressionMode.Compress, CompressionLevel.BestCompression);
             await stream.WriteAsync(byteIn, 0, byteIn.Length);
-
             await stream.CopyToAsync(outStream);
         }
 
@@ -24,12 +22,9 @@ namespace Netherite.Utils
 
         public static async Task<byte[]> DecompressAsync(byte[] byteIn, int size)
         {
-            using var stream = new ZlibStream(new MemoryStream(byteIn, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
-
+            await using var stream = new ZlibStream(new MemoryStream(byteIn, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
             var data = new byte[size];
-
             await stream.ReadAsync(byteIn, 0, size);
-
             return data;
         }
 
@@ -53,11 +48,11 @@ namespace Netherite.Utils
         /// <summary>
         /// Decompress a byte array into another byte array of a potentially unlimited size (!)
         /// </summary>
-        /// <param name="to_decompress">Data to decompress</param>
+        /// <param name="toDecompress">Data to decompress</param>
         /// <returns>Decompressed data as byte array</returns>
-        public static byte[] Decompress(byte[] to_decompress)
+        public static byte[] Decompress(byte[] toDecompress)
         {
-            using var stream = new ZlibStream(new MemoryStream(to_decompress, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
+            using var stream = new ZlibStream(new MemoryStream(toDecompress, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
 
             byte[] buffer = new byte[16 * 1024];
 
@@ -102,28 +97,28 @@ namespace Netherite.Utils
         /// <summary>
         /// Decompress a byte array into another byte array of the specified size
         /// </summary>
-        /// <param name="to_decompress">Data to decompress</param>
-        /// <param name="size_uncompressed">Size of the data once decompressed</param>
+        /// <param name="toDecompress">Data to decompress</param>
+        /// <param name="sizeUncompressed">Size of the data once decompressed</param>
         /// <returns>Decompressed data as a byte array</returns>
-        public static byte[] Decompress(byte[] to_decompress, int size_uncompressed)
+        public static byte[] Decompress(byte[] toDecompress, int sizeUncompressed)
         {
-            using var stream = new GZipStream(new MemoryStream(to_decompress, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
-            byte[] packetData_decompressed = new byte[size_uncompressed];
+            using var stream = new GZipStream(new MemoryStream(toDecompress, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
+            byte[] packetDataDecompressed = new byte[sizeUncompressed];
 
-            stream.Read(packetData_decompressed, 0, size_uncompressed);
+            stream.Read(packetDataDecompressed, 0, sizeUncompressed);
             stream.Close();
 
-            return packetData_decompressed;
+            return packetDataDecompressed;
         }
 
         /// <summary>
         /// Decompress a byte array into another byte array of a potentially unlimited size (!)
         /// </summary>
-        /// <param name="to_decompress">Data to decompress</param>
+        /// <param name="toDecompress">Data to decompress</param>
         /// <returns>Decompressed data as byte array</returns>
-        public static byte[] Decompress(byte[] to_decompress)
+        public static byte[] Decompress(byte[] toDecompress)
         {
-            using var stream = new GZipStream(new MemoryStream(to_decompress, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
+            using var stream = new GZipStream(new MemoryStream(toDecompress, false), CompressionMode.Decompress, CompressionLevel.BestSpeed);
 
             byte[] buffer = new byte[16 * 1024];
 

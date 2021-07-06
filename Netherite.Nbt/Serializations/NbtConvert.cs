@@ -51,13 +51,13 @@ namespace Netherite.Nbt.Serializations
                 }
 
                 Type t = i.GetType();
-                NbtTag temp = ToNbt(t.GetProperty("Item").GetValue(i, new object[] { 0 }));
+                NbtTag temp = ToNbt(t.GetProperty("Item")!.GetValue(i, new object[] { 0 }));
                 NbtList result = new NbtList((NbtTag.TagType)temp.RawType);
                 result.Add(temp);
 
                 for (int z = 1; z < i.Count; z++)
                 {
-                    object x = t.GetProperty("Item").GetValue(i, new object[] { z });
+                    object x = t.GetProperty("Item")!.GetValue(i, new object[] { z });
                     if (x != null) result.Add(ToNbt(x));
                 }
                 return result;
@@ -66,10 +66,10 @@ namespace Netherite.Nbt.Serializations
             if (Reflections.IsInstanceOfGenericType(typeof(Nullable<>), obj))
             {
                 Type t = obj.GetType();
-                bool hasValue = (bool)t.GetProperty("HasValue").GetValue(obj);
+                bool hasValue = (bool)t.GetProperty("HasValue")!.GetValue(obj)!;
                 if(hasValue)
                 {
-                    return ToNbt(t.GetProperty("Value").GetValue(obj));
+                    return ToNbt(t.GetProperty("Value")!.GetValue(obj));
                 }
             }
 
@@ -194,11 +194,11 @@ namespace Netherite.Nbt.Serializations
 
                 if (related == null) return null;
 
-                Type listType = typeof(List<>).MakeGenericType(new Type[] { related });
-                object list = listType.GetConstructor(new Type[0]).Invoke(new object[0]);
+                Type listType = typeof(List<>).MakeGenericType(related);
+                object list = listType.GetConstructor(new Type[0])!.Invoke(new object[0]);
                 foreach (NbtTag child in nl)
                 {
-                    listType.GetMethod("Add").Invoke(list, new object[] { InternalDeserialize(related, child) });
+                    listType.GetMethod("Add")!.Invoke(list, new object[] { InternalDeserialize(related, child) });
                 }
                 return list;
             }
@@ -298,6 +298,7 @@ namespace Netherite.Nbt.Serializations
             return NbtTag.Deserialize(SerializeToBuffer(obj), ref index);
         }
 
+        // Called from deserializer
         private static object CastFromDictionary(Type t, Dictionary<string, object> dict)
         {
             object result = Activator.CreateInstance(t);
@@ -343,7 +344,7 @@ namespace Netherite.Nbt.Serializations
 
                         if(val is byte && prop.PropertyType == typeof(bool))
                         {
-                            val = ((byte)val == 1) ? true : false;
+                            val = (byte)val == 1;
                         }
 
                         if(val is ICollection && !(val is Array) || Reflections.IsTypeOfGenericType(typeof(ICollection<>), prop.PropertyType))
@@ -352,7 +353,7 @@ namespace Netherite.Nbt.Serializations
                             Type listType = typeof(List<>).MakeGenericType(new Type[] { related });
 
                             object list = listType.GetConstructor(new Type[0]).Invoke(new object[0]);
-                            int count = (int)val.GetType().GetProperty("Count").GetValue(val);
+                            int count = (int)val.GetType().GetProperty("Count")!.GetValue(val)!;
 
                             for (int i=0; i<count; i++)
                             {

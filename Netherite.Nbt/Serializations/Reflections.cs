@@ -34,7 +34,7 @@ namespace Netherite.Nbt.Serializations
                     var attr = p.GetCustomAttribute<NbtConverterAttribute>();
                     if (attr != null)
                     {
-                        NbtConverter c = (NbtConverter)attr.ConverterType.GetConstructor(new Type[0]).Invoke(new object[0]);
+                        NbtConverter c = (NbtConverter)attr.ConverterType.GetConstructor(new Type[0])!.Invoke(Array.Empty<object>());
                         op = c.ToNbt(op);
                     }
                     else

@@ -13,6 +13,7 @@ using Netherite.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,27 +27,26 @@ namespace Netherite.Net.Protocols
 
     public abstract class Protocol
     {
-        private Dictionary<int, Func<BufferReader, Packet>> serverHandshakeInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> serverStatusInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> serverLoginInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> serverPlayInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<Type, Action<Packet, BufferWriter>> serverOutHandlers = new Dictionary<Type, Action<Packet, BufferWriter>>();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> serverHandshakeInHandlers = new();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> serverStatusInHandlers = new();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> serverLoginInHandlers = new();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> serverPlayInHandlers = new();
+        private readonly Dictionary<Type, Action<Packet, BufferWriter>> serverOutHandlers = new();
 
-        private Dictionary<int, Func<BufferReader, Packet>> clientHandshakeInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> clientStatusInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> clientLoginInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<int, Func<BufferReader, Packet>> clientPlayInHandlers = new Dictionary<int, Func<BufferReader, Packet>>();
-        private Dictionary<Type, Action<Packet, BufferWriter>> clientOutHandlers = new Dictionary<Type, Action<Packet, BufferWriter>>();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> clientHandshakeInHandlers = new();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> clientStatusInHandlers = new();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> clientLoginInHandlers = new();
+        private readonly Dictionary<int, Func<BufferReader, Packet>> clientPlayInHandlers = new();
+        private readonly Dictionary<Type, Action<Packet, BufferWriter>> clientOutHandlers = new();
 
-        private static Dictionary<int, Protocol> protocols = new Dictionary<int, Protocol>();
-        private static Dictionary<Type, int> protocolTypes = new Dictionary<Type, int>();
+        private static readonly Dictionary<int, Protocol> Protocols = new();
 
         static Protocol()
         {
             FallbackProtocol.EnsureLoad();
         }
 
-        public ICollection<Protocol> LoadedProtocols => protocols.Values;
+        public ICollection<Protocol> LoadedProtocols => Protocols.Values;
 
         public abstract int Version { get; }
 
@@ -114,11 +114,11 @@ namespace Netherite.Net.Protocols
 
         public static Protocol FromVersion(int version)
         {
-            if (!protocols.ContainsKey(version))
+            if (!Protocols.ContainsKey(version))
             {
                 throw new PlatformNotSupportedException($"Protocol version {version} not supported.");
             }
-            return protocols[version];
+            return Protocols[version];
         }
 
         public static int LatestVersion
@@ -126,7 +126,7 @@ namespace Netherite.Net.Protocols
             get
             {
                 int max = int.MinValue;
-                foreach (int n in protocols.Keys)
+                foreach (int n in Protocols.Keys)
                 {
                     if (n > 0x40000000) continue;
                     max = Math.Max(max, n);
@@ -140,7 +140,7 @@ namespace Netherite.Net.Protocols
             get
             {
                 int max = int.MinValue;
-                foreach (int n in protocols.Keys)
+                foreach (int n in Protocols.Keys)
                 {
                     if (n <= 0x40000000) continue;
                     max = Math.Max(max, n);
@@ -153,12 +153,11 @@ namespace Netherite.Net.Protocols
 
         public static Protocol LatestProtocol => FromVersion(LatestVersion);
 
-        public static bool HasVersion(int version) => protocols.ContainsKey(version);
+        public static bool HasVersion(int version) => Protocols.ContainsKey(version);
 
         public static void Register<T>(int version, T protocol) where T : Protocol
         {
-            protocols.Add(version, protocol);
-            protocolTypes.Add(typeof(T), version);
+            Protocols.Add(version, protocol);
             Logger.Log(
                 TranslateText.Of("Registered protocol {0}")
                     .AddWith(Text.RepresentType(typeof(T))));
@@ -166,9 +165,8 @@ namespace Netherite.Net.Protocols
 
         public static void Unregister(int version)
         {
-            Protocol p = protocols[version];
-            protocolTypes.Remove(p.GetType());
-            protocols.Remove(version);
+            Protocol p = Protocols[version];
+            Protocols.Remove(version);
         }
 
         public static void Unregister<T>() where T : Protocol
@@ -180,13 +178,10 @@ namespace Netherite.Net.Protocols
         {
             int v = -1;
             Protocol target = null;
-            foreach (KeyValuePair<int, Protocol> p in protocols)
+            foreach (var p in Protocols.Where(p => t == p.Value.GetType()))
             {
-                if (t.Equals(p.Value.GetType()))
-                {
-                    v = p.Key;
-                    target = p.Value;
-                }
+                v = p.Key;
+                target = p.Value;
             }
 
             if (v == -1 || target == null)
@@ -194,8 +189,7 @@ namespace Netherite.Net.Protocols
                 throw new ArgumentException($"{t.FullName} is not registered");
             }
 
-            protocols.Remove(v);
-            protocolTypes.Remove(t);
+            Protocols.Remove(v);
         }
 
         private void CheckUsingPreview(Type t)
@@ -221,24 +215,14 @@ namespace Netherite.Net.Protocols
             Type t = typeof(T);
             CheckUsingPreview(t);
 
-            Dictionary<int, Func<BufferReader, Packet>> map;
-            switch (state)
+            var map = state switch
             {
-                case PacketState.Handshake:
-                    map = type == ProtocolRole.Server ? serverHandshakeInHandlers : clientHandshakeInHandlers;
-                    break;
-                case PacketState.Status:
-                    map = type == ProtocolRole.Server ? serverStatusInHandlers : clientStatusInHandlers;
-                    break;
-                case PacketState.Login:
-                    map = type == ProtocolRole.Server ? serverLoginInHandlers : clientLoginInHandlers;
-                    break;
-                case PacketState.Play:
-                    map = type == ProtocolRole.Server ? serverPlayInHandlers : clientPlayInHandlers;
-                    break;
-                default:
-                    throw new ArgumentException("state is unknown");
-            }
+                PacketState.Handshake => type == ProtocolRole.Server ? serverHandshakeInHandlers : clientHandshakeInHandlers,
+                PacketState.Status => type == ProtocolRole.Server ? serverStatusInHandlers : clientStatusInHandlers,
+                PacketState.Login => type == ProtocolRole.Server ? serverLoginInHandlers : clientLoginInHandlers,
+                PacketState.Play => type == ProtocolRole.Server ? serverPlayInHandlers : clientPlayInHandlers,
+                _ => throw new ArgumentException("state is unknown")
+            };
 
             map.Add(id, handler);
         }

@@ -84,16 +84,15 @@ namespace Netherite.Net
         {
             if (!p.IsConstantPacket)
             {
-                Func<Text> b = () =>
+                Text ResolveText()
                 {
                     if (p is UnknownPacket up)
                     {
-                        return TranslateText.Of(" [{0} bytes]").AddWith(
-                            LiteralText.Of(up.buffer.Length + "").SetColor(TextColor.DarkGray)
-                        ).SetColor(TextColor.DarkGray);
+                        return TranslateText.Of(" [{0} bytes]").AddWith(LiteralText.Of(up.buffer.Length + "").SetColor(TextColor.DarkGray)).SetColor(TextColor.DarkGray);
                     }
+
                     return LiteralText.Of("");
-                };
+                }
 
                 Logger.Verbose(
                     TranslateText.Of("{0} {1} ")
@@ -109,8 +108,9 @@ namespace Netherite.Net
                                 LiteralText.Of(p.GetType().Name).SetColor(TextColor.Gold)
                             )
                         )
-                        .AddExtra(b()));
+                        .AddExtra(ResolveText()));
             }
+            await Task.CompletedTask;
         }
 
         public event Action Disconnected;
@@ -120,7 +120,6 @@ namespace Netherite.Net
             Task.Run(async () =>
             {
                 BufferStorage storage = new BufferStorage();
-
                 while (Connected)
                 {
                     try

@@ -6,7 +6,7 @@ namespace Netherite.Nbt.Serializations
 {
     internal class BufferWriter
     {
-        private List<byte> container = new List<byte>();
+        private List<byte> container = new();
 
         public byte[] ToBuffer()
         {

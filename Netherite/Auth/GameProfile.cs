@@ -15,7 +15,7 @@ namespace Netherite.Auth
         {
             Properties = new PropertyMap();
 
-            if(Guid == null && (Name == null || Name == ""))
+            if(Guid == null && string.IsNullOrEmpty(Name))
             {
                 throw new ArgumentException("Name and ID cannot both be blank.");
             }
@@ -24,6 +24,6 @@ namespace Netherite.Auth
             Name = name;
         }
 
-        public bool IsComplete => Guid != null && Name != null && Name != "";
+        public bool IsComplete => Guid != Guid.Empty && !string.IsNullOrEmpty(Name);
     }
 }

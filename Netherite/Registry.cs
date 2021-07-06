@@ -11,8 +11,7 @@ namespace Netherite
     {
         public NbtCompound GetDimensionCodec()
         {
-            NbtCompound result = new NbtCompound();
-            result.Name = "";
+            NbtCompound result = new NbtCompound { Name = "" };
             result.Add("minecraft:dimension_type", Dimension.GetCodecs());
             result.Add("minecraft:worldgen/biome", Biome.GetCodecs());
             return result;

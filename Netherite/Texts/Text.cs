@@ -42,25 +42,25 @@ namespace Netherite.Texts
 
         [JsonConverter(typeof(TextColorConverter))]
         [JsonProperty("color", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public TextColor Color { get; set; } = null;
+        public TextColor Color { get; set; }
 
         [JsonProperty("bold", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public bool Bold { get; set; } = false;
+        public bool Bold { get; set; }
 
         [JsonProperty("italic", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public bool Italic { get; set; } = false;
+        public bool Italic { get; set; }
 
         [JsonProperty("obfuscated", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public bool Obfuscated { get; set; } = false;
+        public bool Obfuscated { get; set; }
 
         [JsonProperty("underline", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public bool Underline { get; set; } = false;
+        public bool Underline { get; set; }
 
         [JsonProperty("strikethrough", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public bool Strikethrough { get; set; } = false;
+        public bool Strikethrough { get; set; }
 
         [JsonProperty("reset", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        public bool Reset { get; set; } = false;
+        public bool Reset { get; set; }
 
         public bool ShouldSerializeExtra() => Extra.Count > 0;
 
@@ -107,12 +107,12 @@ namespace Netherite.Texts
             Text result;
             if (obj["text"] != null)
             {
-                result = LiteralText.Of((obj["text"] as JValue).Value<string>());
+                result = LiteralText.Of((obj["text"] as JValue)!.Value<string>());
             }
             else if (obj["translate"] != null)
             {
-                var tr = TranslateText.Of((obj["translate"] as JValue).Value<string>());
-                foreach (JToken token in obj["with"] as JArray)
+                var tr = TranslateText.Of((obj["translate"] as JValue)!.Value<string>());
+                foreach (JToken token in (obj["with"] as JArray)!)
                 {
                     tr.AddWith(FromJson(token as JObject));
                 }
@@ -219,8 +219,8 @@ namespace Netherite.Texts
     public class TranslateText : Text<TranslateText>
     {
         [JsonProperty("translate")]
-        public string Translate { get; set; } = "";
-
+        public string Translate { get; set; }
+        
         [JsonProperty("with")]
         public ICollection<Text> With { get; set; } = new List<Text>();
 

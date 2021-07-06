@@ -8,16 +8,10 @@ namespace Netherite.Converters.Json
 {
     public class TextColorConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType)
-        {
-            return typeof(TextColor).Equals(objectType);
-        }
+        public override bool CanConvert(Type objectType) => typeof(TextColor) == objectType;
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            string name = reader.ReadAsString();
-            return TextColor.Of(name);
-        }
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer) =>
+            TextColor.Of(reader.ReadAsString() ?? "gray");
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

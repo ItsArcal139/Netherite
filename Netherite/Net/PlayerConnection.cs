@@ -155,7 +155,7 @@ namespace Netherite.Net
                             LiteralText.Of("<-").SetColor(TextColor.Aqua)
                         )
                         .AddWith(
-                            LiteralText.Of($"[{Player?.Name ?? Handle.RemoteEndPoint.ToString()}]").SetColor(TextColor.DarkGray)
+                            LiteralText.Of($"[{Player?.Name ?? Handle.RemoteEndPoint?.ToString() ?? "<null>"}]").SetColor(TextColor.DarkGray)
                         )
                         .AddExtra(
                             TranslateText.Of("Received: \t{0} \t{1}").AddWith(
