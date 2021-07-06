@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <Configurations>Debug;Release;Debug Packet</Configurations>
+    <TargetFramework>net6.0</TargetFramework>
+    <Configurations>Debug Packet;Debug;Release</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Packet|AnyCPU'">
@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Folder Include="Resources\" />
+    <Folder Include="Exceptions\" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Resources\dimensions.nbt">

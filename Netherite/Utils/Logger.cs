@@ -15,7 +15,7 @@ namespace Netherite.Utils
 
     public static class Logger
     {
-        public static LogLevel Level { get; set; }
+        public static LogLevel Level { get; set; } = LogLevel.Info;
 
         private const string DefaultName = null;
 
@@ -46,6 +46,13 @@ namespace Netherite.Utils
                 return GetRootType(t.DeclaringType);
             }
             return t;
+        }
+
+        static Logger()
+        {
+#if DEBUG
+            Level = LogLevel.Verbose;
+#endif
         }
 
         private static void Log(LogLevel level, Text t, TextColor color, string name = DefaultName)

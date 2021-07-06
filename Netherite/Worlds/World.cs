@@ -2,6 +2,7 @@
 using Netherite.Blocks;
 using Netherite.Data.Entities;
 using Netherite.Entities;
+using Netherite.Exceptions;
 using Netherite.Nbt;
 using Netherite.Nbt.Serializations;
 using Netherite.Utils;
@@ -53,6 +54,12 @@ namespace Netherite.Worlds
         /// </summary>
         public GameVersion Version { get; set; }
 
+        /// <summary>
+        /// Creates an instance of the world at the given path.
+        /// </summary>
+        /// <param name="path">The path of the world.</param>
+        /// <exception cref="WorldNotFoundException" />
+        /// <exception cref="WorldFileCorruptedException" />
         public World(string path)
         {
             Path = path;
@@ -62,31 +69,44 @@ namespace Netherite.Worlds
         /// <summary>
         /// Reads level.dat and stores level informations.
         /// </summary>
+        /// <exception cref="WorldNotFoundException" />
+        /// <exception cref="WorldFileCorruptedException" />
         private void ReadLevelFile()
         {
             Logger.Log($"Reading level.dat from world folder \"{Path}\"...");
 
-            byte[] buffer = GZipUtils.Decompress(File.ReadAllBytes($"{Path}/level.dat"));
-            NbtCompound data = (NbtCompound)((NbtCompound)NbtTag.Deserialize(buffer, true))["Data"];
-
-            Version = NbtConvert.Deserialize<GameVersion>(data["Version"]);
-            Logger.Log($"Version: {Version.Name} ({Version.DataVersion})" + (Version.IsSnapshot ? ", Snapshot" : ""));
-
-            LevelName = ((NbtString)data["LevelName"]).ToValue();
-            Logger.Log($"Level name: {LevelName}");
-
-            // Seed value location is changed since 1.16
-            if (Version.DataVersion < 2566)
+            if (!Directory.Exists(Path))
             {
-                // Seed is saved under $.RandomSeed
-                Seed = ((NbtLong)data["RandomSeed"]).Value;
+                throw new WorldNotFoundException(this);
             }
-            else
+
+            try
             {
-                // Seed is saved under $.WorldGenSettings.seed
-                Seed = ((NbtLong)((NbtCompound)data["WorldGenSettings"])["seed"]).Value;
+                byte[] buffer = GZipUtils.Decompress(File.ReadAllBytes($"{Path}/level.dat"));
+                NbtCompound data = (NbtCompound)((NbtCompound)NbtTag.Deserialize(buffer, true))["Data"];
+
+                Version = NbtConvert.Deserialize<GameVersion>(data["Version"]);
+                Logger.Log($"Version: {Version.Name} ({Version.DataVersion})" + (Version.IsSnapshot ? ", Snapshot" : ""));
+
+                LevelName = ((NbtString)data["LevelName"]).ToValue();
+                Logger.Log($"Level name: {LevelName}");
+
+                // Seed value location is changed since 1.16
+                if (Version.DataVersion < 2566)
+                {
+                    // Seed is saved under $.RandomSeed
+                    Seed = ((NbtLong)data["RandomSeed"]).Value;
+                }
+                else
+                {
+                    // Seed is saved under $.WorldGenSettings.seed
+                    Seed = ((NbtLong)((NbtCompound)data["WorldGenSettings"])["seed"]).Value;
+                }
+                Logger.Log($"Seed: {Seed}");
+            } catch(Exception ex)
+            {
+                throw new WorldFileCorruptedException(this, $"{Path}/level.dat", ex);
             }
-            Logger.Log($"Seed: {Seed}");
         }
 
         private SemaphoreSlim dictLock = new SemaphoreSlim(1, 1);
@@ -192,7 +212,7 @@ namespace Netherite.Worlds
             for (; y >= 0; y--)
             {
                 var block = GetBlock(x, y, z);
-                if(block.State.Material != Material.Air)
+                if (block.State.Material != Material.Air)
                 {
                     break;
                 }
